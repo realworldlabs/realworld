@@ -26,6 +26,7 @@ function fakeChain(asset: Partial<AssetOnChain> = {}) {
   };
   const tokens = ["0x1111111111111111111111111111111111111111", "0x2222222222222222222222222222222222222222"] as Address[];
   const chain: KeeperChain = {
+    now: async () => Math.floor(NOW / 1000),
     asset: async () => state,
     movePrice: async (assetId, tick, hash) => {
       moves.push({ assetId, tick, hash });

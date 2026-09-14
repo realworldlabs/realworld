@@ -19,4 +19,4 @@ pnpm start             # run forever
 pnpm test
 ```
 
-Source adapters: `fredCsv`, `bls`, `nyfed`, `eurostat`, `steam`, `skinport`, `economistBigMac`, `pricecharting` (token), and `attested` (operator-published JSON for assets with a single public source).
+Source adapters: `fredCsv`, `bls`, `nyfed`, `eurostat`, `steam` (use `"scale": 0.87` to net out its ~15% seller fee), `skinport`, `economistBigMac`, `pricecharting` (token), and `attested` (operator-published JSON for assets with a single public source).

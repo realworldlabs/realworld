@@ -13,7 +13,7 @@ import { assetRegistryAbi, buybackVaultAbi, launchFactoryAbi, priceWallAbi } fro
 import type { Env } from "./config.ts";
 
 export const robinhoodChain = defineChain({
-  id: 4663,
+  id: Number(process.env.CHAIN_ID ?? 4663),
   name: "Robinhood Chain",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: { default: { http: ["https://rpc.mainnet.chain.robinhood.com"] } },
@@ -32,6 +32,8 @@ export interface AssetOnChain {
 
 /** Everything the jobs need from the chain. Implemented with viem below and faked in tests. */
 export interface KeeperChain {
+  /** Latest block timestamp (seconds). On-chain intervals are measured against this, not the local clock. */
+  now(): Promise<number>;
   asset(assetId: number): Promise<AssetOnChain>;
   movePrice(assetId: number, tick: number, sourcesHash: Hex): Promise<Hex>;
   launchTokens(fromIndex: number): Promise<Address[]>;
@@ -64,6 +66,9 @@ export function viemChain(env: Env): KeeperChain {
   }
 
   return {
+    async now() {
+      return Number((await pub.getBlock({ blockTag: "latest" })).timestamp);
+    },
     async asset(assetId) {
       const id = BigInt(assetId);
       const [state, config, synthIsToken0] = await Promise.all([

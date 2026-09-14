@@ -201,9 +201,14 @@ export async function collect(
   );
   const observations: Observation[] = [];
   const errors: string[] = [];
-  for (const r of results) {
-    if (r.status === "fulfilled") observations.push(...r.value);
-    else errors.push(String(r.reason?.message ?? r.reason));
-  }
+  results.forEach((r, i) => {
+    if (r.status !== "fulfilled") {
+      errors.push(String(r.reason?.message ?? r.reason));
+      return;
+    }
+    // Optional per-source normalisation, e.g. Steam prices carry a ~15% seller fee premium over cash markets.
+    const scale = typeof specs[i]!.scale === "number" ? (specs[i]!.scale as number) : 1;
+    observations.push(...r.value.map((o) => (scale === 1 ? o : { ...o, price: o.price * scale })));
+  });
   return { observations, errors };
 }

@@ -83,3 +83,10 @@ describe("recorded sources", () => {
     expect(errors).toHaveLength(3);
   });
 });
+
+describe("per-source scale", () => {
+  it("normalises a source before aggregation", async () => {
+    const { observations } = await collect([{ type: "steam", marketHashName: "AK-47 | Redline (Field-Tested)", scale: 0.5 }], c);
+    expect(observations[0]!.price).toBeCloseTo(36.8 * 0.5, 6);
+  });
+});

@@ -27,9 +27,7 @@ export async function runPriceUpdate(asset: AssetConfig, deps: PriceUpdateDeps):
   const { chain, logger } = deps;
   const tag = { assetId: asset.assetId, symbol: asset.symbol };
   const nowMs = deps.sources.now();
-  const nowSec = Math.floor(nowMs / 1000);
-
-  const onChain = await chain.asset(asset.assetId);
+  const [onChain, nowSec] = await Promise.all([chain.asset(asset.assetId), chain.now()]);
   const age = nowSec - onChain.lastUpdate;
   if (age > onChain.heartbeat * HEARTBEAT_WARN_RATIO) {
     logger.log("warn", "asset approaching stale heartbeat", { ...tag, ageSec: age, heartbeatSec: onChain.heartbeat });

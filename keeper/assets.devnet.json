@@ -1,0 +1,36 @@
+{
+  "assets": [
+    {
+      "assetId": 0,
+      "symbol": "sUSCPI",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "bls",
+          "series": "CUUR0000SA0"
+        },
+        {
+          "type": "fredCsv",
+          "series": "CPIAUCNS",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "assetId": 1,
+      "symbol": "sREDLINE",
+      "category": "COLLECTIBLE",
+      "sources": [
+        {
+          "type": "steam",
+          "marketHashName": "AK-47 | Redline (Field-Tested)",
+          "scale": 0.87
+        },
+        {
+          "type": "skinport",
+          "marketHashName": "AK-47 | Redline (Field-Tested)"
+        }
+      ]
+    }
+  ]
+}
