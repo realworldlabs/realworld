@@ -1,0 +1,15 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "pnpm install --frozen-lockfile --filter @rwa/indexer...",
+    "watchPatterns": ["indexer/**", "packages/abi/**", "contracts/deployments/mainnet.json"]
+  },
+  "deploy": {
+    "startCommand": "cd indexer && pnpm exec ponder start --schema $RAILWAY_DEPLOYMENT_ID --views-schema rwa",
+    "healthcheckPath": "/ready",
+    "healthcheckTimeout": 3600,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}

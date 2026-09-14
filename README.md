@@ -65,9 +65,11 @@ On Windows, `forge` gets connection resets from the public Robinhood RPC while `
 
 ## Mainnet deployment
 
-1. `forge script script/DeployRwa.s.sol` then `script/DeployLaunchpad.s.sol` (see script headers for env vars). Ownership transfers to `OWNER`, which must `acceptOwnership` (Ownable2Step).
-2. Add underlyings with `script/AddAsset.s.sol`; set the keeper as `BuybackVault` operator.
-3. Write `contracts/deployments/mainnet.json` (same shape as `devnet.json`) for the indexer and web build.
-4. Run the keeper with `keeper/assets.json`, the indexer against Postgres (`DATABASE_URL`), and build the web app with production env.
+Step-by-step runbook (Indonesian): [`docs/DEPLOY.md`](docs/DEPLOY.md). In short:
+
+
+1. `pnpm --filter @rwa/keeper seed` writes opening prices from live, agreed sources to `contracts/deploy/initial-assets.json`.
+2. `forge script script/DeployMainnet.s.sol` deploys everything, adds those underlyings, makes the keeper a buyback operator, hands ownership to `OWNER` (which must `acceptOwnership`) and writes `contracts/deployments/mainnet.json`.
+3. Indexer and keeper run on Railway (`indexer/railway.json`, `keeper/railway.json`); the web app on Vercel with root directory `web`.
 
 **Before real money:** an external audit of `contracts/src`; owner and guardian multisigs; a dedicated keeper key with alerting (`ALERT_WEBHOOK`); second sources for single-source assets (Big Mac, Case-Shiller) via `attested` feeds or paid APIs (`PRICECHARTING_TOKEN` for cards); a WalletConnect project id; legal review of offering synthetic exposure to these assets.

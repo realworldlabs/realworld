@@ -1,0 +1,42 @@
+{
+  "_note": "Not deployed at launch: each needs a second independent source (attested feed or paid API). Add on-chain with contracts/script/AddAsset.s.sol, then move into assets.json with the id the registry assigned.",
+  "assets": [
+    {
+      "assetId": null,
+      "symbol": "sBIGMAC",
+      "name": "Big Mac (US)",
+      "category": "COLLECTIBLE",
+      "rules": {
+        "agreementBps": 500
+      },
+      "sources": [
+        {
+          "type": "economistBigMac",
+          "iso": "USA"
+        },
+        {
+          "type": "attested",
+          "url": "https://example.com/attest/bigmac-usa.json"
+        }
+      ]
+    },
+    {
+      "assetId": null,
+      "symbol": "sCHARIZARD",
+      "name": "Charizard Base Set PSA 10 (1/1000)",
+      "category": "COLLECTIBLE",
+      "unitScale": 0.001,
+      "sources": [
+        {
+          "type": "pricecharting",
+          "id": "REPLACE_WITH_PRODUCT_ID",
+          "field": "manual-only-price"
+        },
+        {
+          "type": "attested",
+          "url": "https://example.com/attest/charizard-psa10.json"
+        }
+      ]
+    }
+  ]
+}

@@ -8,7 +8,8 @@
     "once": "node --env-file-if-exists=.env src/main.ts --once",
     "probe": "node --env-file-if-exists=.env src/probe.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed": "node --env-file-if-exists=.env src/seed.ts"
   },
   "dependencies": {
     "@rwa/abi": "workspace:*",

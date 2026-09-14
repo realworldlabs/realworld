@@ -9,6 +9,8 @@ const sourceSpec = z.object({ type: z.string() }).catchall(z.unknown());
 const assetSchema = z.object({
   assetId: z.number().int().nonnegative(),
   symbol: z.string(),
+  /** Human name used when the asset is created on-chain. */
+  name: z.string().optional(),
   category: z.enum(["MACRO", "COLLECTIBLE"]),
   /** Token price = source price x unitScale (e.g. 0.001 when one token is 1/1000 of a card). */
   unitScale: z.number().positive().default(1),

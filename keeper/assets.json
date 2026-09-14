@@ -3,6 +3,7 @@
     {
       "assetId": 0,
       "symbol": "sUSCPI",
+      "name": "US CPI-U Index",
       "category": "MACRO",
       "sources": [
         {
@@ -19,6 +20,7 @@
     {
       "assetId": 1,
       "symbol": "sFEDFUNDS",
+      "name": "Effective Fed Funds Rate",
       "category": "MACRO",
       "sources": [
         {
@@ -35,6 +37,7 @@
     {
       "assetId": 2,
       "symbol": "sEUHPI",
+      "name": "Euro Area House Price Index",
       "category": "MACRO",
       "sources": [
         {
@@ -52,6 +55,7 @@
     {
       "assetId": 3,
       "symbol": "sREDLINE",
+      "name": "AK-47 Redline (Field-Tested)",
       "category": "COLLECTIBLE",
       "sources": [
         {
@@ -62,41 +66,6 @@
         {
           "type": "skinport",
           "marketHashName": "AK-47 | Redline (Field-Tested)"
-        }
-      ]
-    },
-    {
-      "assetId": 4,
-      "symbol": "sBIGMAC",
-      "category": "COLLECTIBLE",
-      "rules": {
-        "agreementBps": 500
-      },
-      "sources": [
-        {
-          "type": "economistBigMac",
-          "iso": "USA"
-        },
-        {
-          "type": "attested",
-          "url": "https://example.com/attest/bigmac-usa.json"
-        }
-      ]
-    },
-    {
-      "assetId": 5,
-      "symbol": "sCHARIZARD",
-      "category": "COLLECTIBLE",
-      "unitScale": 0.001,
-      "sources": [
-        {
-          "type": "pricecharting",
-          "id": "REPLACE_WITH_PRODUCT_ID",
-          "field": "manual-only-price"
-        },
-        {
-          "type": "attested",
-          "url": "https://example.com/attest/charizard-psa10.json"
         }
       ]
     }
