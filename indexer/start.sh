@@ -1,5 +1,5 @@
 #!/bin/sh
-# Starts Ponder (foreground) and, if a keeper key is configured, the keeper loop (background, restarted on exit).
+# Starts the indexer (foreground) and, if a keeper key is configured, the keeper loop (background, restarted on exit).
 set -u
 cd /app
 
@@ -15,5 +15,4 @@ if [ -n "${KEEPER_PRIVATE_KEY:-}" ]; then
 fi
 
 cd /app/indexer
-# One database schema per deployment keeps zero-downtime redeploys safe; the "rwa" views schema is the stable API.
-exec pnpm exec ponder start --schema "${RAILWAY_DEPLOYMENT_ID:-rwa_local}" --views-schema rwa --port "${PORT:-42069}"
+exec node src/main.ts

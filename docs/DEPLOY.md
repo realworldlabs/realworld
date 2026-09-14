@@ -94,7 +94,8 @@ railway link                       # pilih project (harus sudah punya database P
 railway add --service indexer --repo realworldlabs/realworld \
   --variables RAILWAY_DOCKERFILE_PATH=indexer/Dockerfile \
   --variables 'DATABASE_URL=${{Postgres.DATABASE_URL}}' \
-  --variables PONDER_RPC_URL=https://rpc.mainnet.chain.robinhood.com \
+  --variables RPC_URL=<URL RPC, mis. QuickNode> \
+  --variables LOG_RANGE=5 \
   --variables DEPLOYMENTS_FILE=../contracts/deployments/mainnet.json
 railway domain --service indexer   # URL publik indexer
 

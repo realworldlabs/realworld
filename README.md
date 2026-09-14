@@ -10,7 +10,7 @@ Design: [`docs/superpowers/specs/2026-09-14-rwa-launchpad-design.md`](docs/super
 |---|---|---|
 | `contracts/` | Synthetic RWA stack (registry, price walls, redemption vault) and launchpad (factory, fee hook, escrow, buybacks, locker, router) | Solidity 0.8.26, Foundry, Uniswap v4 |
 | `keeper/` | Moves price walls from agreeing real-world sources; graduates sold-out curves; runs buybacks | TypeScript, viem |
-| `indexer/` | Indexes assets, launches, trades, candles, holders and fees; REST + GraphQL API | Ponder 0.17 |
+| `indexer/` | Indexes assets, launches, trades, candles, holders and fees; REST API | viem + drizzle (Postgres/PGlite) + Hono |
 | `web/` | The trading app | Next.js 16, wagmi, RainbowKit, lightweight-charts |
 | `packages/abi` | Contract ABIs generated from the Foundry build (`pnpm abi`) | |
 
@@ -38,7 +38,7 @@ Requires Node 22+, pnpm, and Foundry (`~/.foundry/bin`).
 pnpm install
 (cd contracts && forge build) && pnpm abi
 bash contracts/script/devnet.sh                          # anvil on :8545 with the stack, 3 underlyings, 4 coins, trades
-(cd indexer && pnpm start -- --schema devnet)            # API on :42069
+(cd indexer && pnpm start)                               # API on :42069 (PGlite in indexer/.data)
 cp web/.env.example web/.env.local                       # set NEXT_PUBLIC_DEVNET=true and local URLs
 pnpm --filter @rwa/web dev                               # app on :3100; the unlocked anvil account connects automatically
 ```

@@ -1,5 +1,5 @@
 # Build context is the repository root (set RAILWAY_DOCKERFILE_PATH=indexer/Dockerfile on the service).
-# Runs the Ponder indexer and, when KEEPER_PRIVATE_KEY is set, the keeper as a sidecar in the same container.
+# Runs the indexer and, when KEEPER_PRIVATE_KEY is set, the keeper as a sidecar in the same container.
 # The sidecar exists for plans that allow a single service; use keeper/Dockerfile for a separate service.
 FROM node:24-alpine
 RUN corepack enable
