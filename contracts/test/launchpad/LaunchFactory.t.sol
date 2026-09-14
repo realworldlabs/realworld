@@ -6,6 +6,8 @@ import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
 import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {ModifyLiquidityParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
 import {StateLibrary} from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
+import {PoolId} from "@uniswap/v4-core/src/types/PoolId.sol";
+import {Vm} from "forge-std/Vm.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {LaunchFactory} from "../../src/launchpad/LaunchFactory.sol";
 import {LaunchToken} from "../../src/launchpad/LaunchToken.sol";
@@ -128,6 +130,29 @@ abstract contract LaunchFactoryTestBase is LaunchFixture {
         assertEq(pairChange, -1_000e6);
         assertGt(tokenChange, 0);
         assertEq(escrow.balanceOf(launchTreasury, usdgC) - treasuryBefore, 3e6);
+    }
+
+    function test_swap_emitsTraded() public {
+        usdgToken.mint(alice, 100e6);
+        PoolKey memory key = factory.poolKeyOf(token);
+        vm.recordLogs();
+        swapLaunch(token, alice, true, -100e6);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        bytes32 sig = keccak256("Traded(bytes32,address,int128,int128,uint160)");
+        bool found;
+        for (uint256 i; i < logs.length; ++i) {
+            if (logs[i].emitter != address(launchHook) || logs[i].topics[0] != sig) continue;
+            found = true;
+            assertEq(logs[i].topics[1], PoolId.unwrap(key.toId()));
+            assertEq(address(uint160(uint256(logs[i].topics[2]))), token);
+            (int128 a0, int128 a1, uint160 sqrtP) = abi.decode(logs[i].data, (int128, int128, uint160));
+            int128 pairDelta = Currency.unwrap(key.currency0) == token ? a1 : a0;
+            // Trader paid the pair net of the hook fee (1% of 100 USDG).
+            assertEq(pairDelta, -99e6);
+            (uint160 poolSqrtP,,,) = StateLibrary.getSlot0(manager, key.toId());
+            assertEq(sqrtP, poolSqrtP);
+        }
+        assertTrue(found);
     }
 
     function test_buyExactOutput_chargesOnSpend() public {

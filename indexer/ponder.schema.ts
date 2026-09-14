@@ -73,14 +73,6 @@ export const coin = onchainTable(
   }),
 );
 
-/** Maps v4 pool ids to what they are, so the PoolManager Swap handler can ignore foreign pools cheaply. */
-export const pool = onchainTable("pool", (t) => ({
-  poolId: t.hex().primaryKey(),
-  kind: t.text().notNull(), // coin | wall
-  token: t.hex().notNull(),
-  assetId: t.integer(),
-}));
-
 export const trade = onchainTable(
   "trade",
   (t) => ({

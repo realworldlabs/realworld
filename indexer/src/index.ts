@@ -7,7 +7,6 @@ import {
   coin,
   feeBalance,
   holder,
-  pool,
   redemption,
   trade,
 } from "ponder:schema";
@@ -52,7 +51,6 @@ ponder.on("AssetRegistry:AssetAdded", async ({ event, context }) => {
       args: [assetId],
     }),
   ]);
-  const poolId = poolIdOf(key);
   const id = Number(assetId);
   await context.db.insert(asset).values({
     assetId: id,
@@ -61,7 +59,7 @@ ponder.on("AssetRegistry:AssetAdded", async ({ event, context }) => {
     name: config.name,
     category: CATEGORY[config.category] ?? "MACRO",
     metadataUri: config.metadataURI,
-    poolId,
+    poolId: poolIdOf(key),
     synthIsToken0,
     tick: startTick,
     priceUsd: synthPriceAtTick(startTick, synthIsToken0),
@@ -70,7 +68,6 @@ ponder.on("AssetRegistry:AssetAdded", async ({ event, context }) => {
     pot: 0n,
     launches: 0,
   });
-  await context.db.insert(pool).values({ poolId, kind: "wall", token, assetId: id }).onConflictDoNothing();
 });
 
 ponder.on("AssetRegistry:PriceRecorded", async ({ event, context }) => {
@@ -195,7 +192,6 @@ ponder.on("LaunchFactory:Launched", async ({ event, context }) => {
     trades: firstBuyTokens > 0n ? 1 : 0,
     lastTradeAt: now,
   });
-  await context.db.insert(pool).values({ poolId, kind: "coin", token, assetId }).onConflictDoNothing();
   if (firstBuyTokens > 0n) {
     await context.db.insert(trade).values({
       id: event.id,
@@ -230,15 +226,10 @@ ponder.on("LaunchFactory:CreatorSettingsUpdated", async ({ event, context }) => 
 
 // ---------------------------------------------------------------- trading
 
-ponder.on("PoolManager:Swap", async ({ event, context }) => {
-  const { id, amount0, amount1, sqrtPriceX96 } = event.args;
-  const p = await context.db.find(pool, { poolId: id });
-  if (!p) return; // not one of ours
-  if (amount0 === 0n && amount1 === 0n) return; // wall re-park / migration park
-
-  if (p.kind === "wall") return; // synth buys are visible through pot credits
-
-  const c = await context.db.find(coin, { token: p.token });
+ponder.on("LaunchHook:Traded", async ({ event, context }) => {
+  const { token, amount0, amount1, sqrtPriceX96 } = event.args;
+  // The creator's first buy trades before Launched is emitted; that trade is recorded by the Launched handler.
+  const c = await context.db.find(coin, { token });
   if (!c) return;
   const ts = Number(event.block.timestamp);
   const pairAmountSigned = c.tokenIsToken0 ? amount1 : amount0;

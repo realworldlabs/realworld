@@ -4346,6 +4346,43 @@ export const launchHookAbi = [
     "anonymous": false
   },
   {
+    "type": "event",
+    "name": "Traded",
+    "inputs": [
+      {
+        "name": "id",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "PoolId"
+      },
+      {
+        "name": "token",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount0",
+        "type": "int128",
+        "indexed": false,
+        "internalType": "int128"
+      },
+      {
+        "name": "amount1",
+        "type": "int128",
+        "indexed": false,
+        "internalType": "int128"
+      },
+      {
+        "name": "sqrtPriceX96",
+        "type": "uint160",
+        "indexed": false,
+        "internalType": "uint160"
+      }
+    ],
+    "anonymous": false
+  },
+  {
     "type": "error",
     "name": "AlreadyWired",
     "inputs": []

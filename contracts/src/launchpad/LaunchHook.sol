@@ -32,6 +32,12 @@ contract LaunchHook is HookStub, ILaunchHook {
 
     mapping(PoolId => PoolInfo) private _pools;
 
+    /// @notice Emitted for every non-empty swap in a launch pool, so indexers never need to scan the busy PoolManager.
+    /// @param amount0 trader's currency0 delta excluding hook fees (negative = paid in)
+    /// @param amount1 trader's currency1 delta excluding hook fees (negative = paid in)
+    /// @param sqrtPriceX96 pool price after the swap
+    event Traded(PoolId indexed id, address indexed token, int128 amount0, int128 amount1, uint160 sqrtPriceX96);
+
     event FeeTaken(
         PoolId indexed id, address indexed token, uint256 protocolFee, uint256 creatorFee, uint256 buybackFee
     );
@@ -165,6 +171,10 @@ contract LaunchHook is HookStub, ILaunchHook {
     ) external override onlyPoolManager returns (bytes4, int128) {
         PoolId id = key.toId();
         PoolInfo storage p = _pools[id];
+        if (delta.amount0() != 0 || delta.amount1() != 0) {
+            (uint160 sqrtP,,,) = poolManager.getSlot0(id);
+            emit Traded(id, p.token, delta.amount0(), delta.amount1(), sqrtP);
+        }
         if (_feeExempt(sender, hookData)) return (this.afterSwap.selector, 0);
 
         bool exactInput = params.amountSpecified < 0;
