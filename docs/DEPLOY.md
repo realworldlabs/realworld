@@ -18,7 +18,13 @@ Tools lokal: Node 22+, pnpm, Foundry (`~/.foundry/bin`).
 
 Jalankan di terminalmu sendiri (interaktif):
 
+```powershell
+# PowerShell (Windows)
+powershell -ExecutionPolicy Bypass -File contractsscriptgenerate-wallets.ps1
+```
+
 ```bash
+# Git Bash / macOS / Linux
 bash contracts/script/generate-wallets.sh
 ```
 
