@@ -212,3 +212,26 @@ All fees are denominated in the pair asset. Rates are the same on the curve and 
 ## 9. Out of scope for v1
 
 Snipe tax, holder fees (burn/claim share), community takeover flow, migration of external coins, multi-signer oracle committee, and third-party oracle feeds.
+
+## 10. Implementation status (2026-09-14)
+
+All four sub-projects are implemented and tested locally; nothing is deployed to mainnet.
+
+| Sub-project | Where | Verification |
+|---|---|---|
+| 1. Synthetic RWA | `contracts/src/rwa`, `keeper/` | 52 contract tests incl. solvency invariant; fork test on live PoolManager/USDG; keeper moved a wall on the devnet from live Steam/Skinport prices |
+| 2. Launchpad | `contracts/src/launchpad` | 76 contract tests incl. escrow-solvency fuzz; fork test of launch → sell-out → graduation → sell to USDG |
+| 3. Indexer | `indexer/` | replayed the devnet; API values cross-checked against contract state |
+| 4. Frontend | `web/` | buy, launch and fee claim exercised end to end in the browser against the devnet; production build passes |
+
+### Deviations from this spec
+
+- **SynthToken** is a plain ERC-20, not an EIP-1167 clone. **Keeper bounds** are stored in ticks (`maxMoveTicks`), not bps.
+- **Wall pools reject synth → USDG swaps** from anyone but the PriceWall; holders exit only through the vault, which keeps the pro-rata haircut fair.
+- **Socials** are twitter, telegram and website only.
+- **Buyback vesting** is one 365-day duration on the vault with a weighted-start clock, rather than per-config, per-batch schedules.
+- **`executeBuyback`** is limited to the fee recipient and owner-appointed operators, because a permissionless trigger can be sandwiched.
+- **`LaunchRouter.buy`** clamps input to what the curve can still absorb and stops at the curve end price. Otherwise oversized buys paid fees on unused input and pushed the empty pool to absurd prices.
+- **Native ETH payment** is not in v1; the router takes USDG or the underlying.
+- **Initial assets** with two verified keyless sources: US CPI (BLS + FRED), Fed funds (NY Fed + FRED), euro-area HPI (Eurostat + BIS via FRED), AK-47 Redline (Steam ×0.87 + Skinport). Case-Shiller, Big Mac and Charizard need an attested or paid second source.
+- **Macro agreement** is checked on the latest reporting period shared by both sources, because statistics mirrors can lag by months.
