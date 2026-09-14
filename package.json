@@ -1,0 +1,9 @@
+{
+  "name": "rwa-launchpad",
+  "private": true,
+  "packageManager": "pnpm@11.3.0",
+  "scripts": {
+    "abi": "node scripts/export-abis.mjs",
+    "test": "pnpm -r test"
+  }
+}

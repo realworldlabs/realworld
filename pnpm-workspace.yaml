@@ -1,0 +1,7 @@
+packages:
+  - packages/*
+  - keeper
+  - indexer
+  - web
+allowBuilds:
+  esbuild: true
