@@ -46,7 +46,8 @@ export interface KeeperChain {
 
 export function viemChain(env: Env): KeeperChain {
   const account = privateKeyToAccount(env.KEEPER_PRIVATE_KEY as Hex);
-  const transport = http(env.RPC_URL, { timeout: 30_000, retryCount: 3 });
+  // The keeper shares its RPC with the indexer, whose backfill bursts trigger 429s: back off for ~1.5 min before giving up.
+  const transport = http(env.RPC_URL, { timeout: 30_000, retryCount: 6, retryDelay: 1_500 });
   const pub: PublicClient = createPublicClient({ chain: robinhoodChain, transport });
   const wallet: WalletClient = createWalletClient({ chain: robinhoodChain, transport, account });
   const registry = env.REGISTRY as Address;
