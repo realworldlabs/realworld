@@ -2,8 +2,10 @@ node_modules
 **/node_modules
 **/.next
 **/out
-**/cache
-**/broadcast
+contracts/cache
+contracts/broadcast
+contracts/lib
+contracts/out
 **/.ponder
-**/lib
+**/.vercel
 .git

@@ -10,6 +10,8 @@ function deployments(): string {
 }
 
 const config: NextConfig = {
+  output: "export",
+  trailingSlash: false,
   transpilePackages: ["@rwa/abi"],
   reactStrictMode: true,
   env: { NEXT_PUBLIC_DEPLOYMENTS: deployments() },

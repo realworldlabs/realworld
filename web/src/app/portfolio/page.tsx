@@ -68,7 +68,7 @@ export default function PortfolioPage() {
           </thead>
           <tbody>
             {(data?.holdings ?? []).map((h) => (
-              <tr key={h.coin.token} onClick={() => (window.location.href = `/coin/${h.coin.token}`)}>
+              <tr key={h.coin.token} onClick={() => (window.location.href = `/coin?token=${h.coin.token}`)}>
                 <td>
                   <span className="coin-cell">
                     <CoinAvatar coin={h.coin} />
@@ -130,7 +130,7 @@ export default function PortfolioPage() {
         </div>
         <div className="tape-list">
           {(data?.trades ?? []).map((t) => (
-            <Link key={t.id} href={`/coin/${t.token}`} className="tape-row">
+            <Link key={t.id} href={`/coin?token=${t.token}`} className="tape-row">
               <span className={t.side === "buy" ? "up" : "down"}>{t.side.toUpperCase()}</span>
               <span>{formatAmount(t.tokenAmount, 18, 0)}</span>
               <span className="dim">{formatUsd(t.valueUsd)}</span>
@@ -191,7 +191,7 @@ function CreatedRow({ coin }: { coin: Coin }) {
   });
   return (
     <div className="tape-row" style={{ gridTemplateColumns: "1fr auto auto" }}>
-      <Link href={`/coin/${coin.token}`}>
+      <Link href={`/coin?token=${coin.token}`}>
         <strong>{coin.symbol}</strong> <span className="mute">{formatUsd(coin.marketCapUsd, { compact: true })}</span>
       </Link>
       {budget !== undefined && budget > 0n ? (

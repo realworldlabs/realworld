@@ -40,7 +40,7 @@ export default function AssetsPage() {
               </div>
               <div className="asset-grid">
                 {g.items.map((a) => (
-                  <Link key={a.assetId} href={`/assets/${a.assetId}`} className="asset-card">
+                  <Link key={a.assetId} href={`/asset?id=${a.assetId}`} className="asset-card">
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span className="display" style={{ fontSize: 30, textTransform: "none" }}>
                         {a.symbol}

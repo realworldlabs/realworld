@@ -106,10 +106,10 @@ export default function BoardPage() {
           </thead>
           <tbody>
             {(coins?.items ?? []).map((c, i) => (
-              <tr key={c.token} onClick={() => router.push(`/coin/${c.token}`)}>
+              <tr key={c.token} onClick={() => router.push(`/coin?token=${c.token}`)}>
                 <td className="mono mute">{String(i + 1).padStart(2, "0")}</td>
                 <td>
-                  <Link href={`/coin/${c.token}`} className="coin-cell" onClick={(e) => e.stopPropagation()}>
+                  <Link href={`/coin?token=${c.token}`} className="coin-cell" onClick={(e) => e.stopPropagation()}>
                     <CoinAvatar coin={c} />
                     <span>
                       <div className="coin-sym">{c.symbol}</div>

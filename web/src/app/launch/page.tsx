@@ -97,7 +97,7 @@ export default function LaunchPage() {
     if (!hash) return;
     const receipt = await getPublicClient(config)!.getTransactionReceipt({ hash });
     const [launched] = parseEventLogs({ abi: launchFactoryAbi, eventName: "Launched", logs: receipt.logs });
-    if (launched) setTimeout(() => router.push(`/coin/${launched.args.token}`), 1_200);
+    if (launched) setTimeout(() => router.push(`/coin?token=${launched.args.token}`), 1_200);
   }
 
   return (
