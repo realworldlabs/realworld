@@ -1,0 +1,103 @@
+{
+  "assets": [
+    {
+      "assetId": 0,
+      "symbol": "sUSCPI",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "bls",
+          "series": "CUUR0000SA0"
+        },
+        {
+          "type": "fredCsv",
+          "series": "CPIAUCNS",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "assetId": 1,
+      "symbol": "sFEDFUNDS",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "nyfed",
+          "rate": "effr"
+        },
+        {
+          "type": "fredCsv",
+          "series": "EFFR",
+          "period": "day"
+        }
+      ]
+    },
+    {
+      "assetId": 2,
+      "symbol": "sEUHPI",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "eurostat",
+          "dataset": "prc_hpi_q",
+          "query": "geo=EA20&unit=I15_Q&purchase=TOTAL"
+        },
+        {
+          "type": "fredCsv",
+          "series": "QXMN628BIS",
+          "period": "quarter"
+        }
+      ]
+    },
+    {
+      "assetId": 3,
+      "symbol": "sREDLINE",
+      "category": "COLLECTIBLE",
+      "sources": [
+        {
+          "type": "steam",
+          "marketHashName": "AK-47 | Redline (Field-Tested)"
+        },
+        {
+          "type": "skinport",
+          "marketHashName": "AK-47 | Redline (Field-Tested)"
+        }
+      ]
+    },
+    {
+      "assetId": 4,
+      "symbol": "sBIGMAC",
+      "category": "COLLECTIBLE",
+      "rules": {
+        "agreementBps": 500
+      },
+      "sources": [
+        {
+          "type": "economistBigMac",
+          "iso": "USA"
+        },
+        {
+          "type": "attested",
+          "url": "https://example.com/attest/bigmac-usa.json"
+        }
+      ]
+    },
+    {
+      "assetId": 5,
+      "symbol": "sCHARIZARD",
+      "category": "COLLECTIBLE",
+      "unitScale": 0.001,
+      "sources": [
+        {
+          "type": "pricecharting",
+          "id": "REPLACE_WITH_PRODUCT_ID",
+          "field": "manual-only-price"
+        },
+        {
+          "type": "attested",
+          "url": "https://example.com/attest/charizard-psa10.json"
+        }
+      ]
+    }
+  ]
+}
