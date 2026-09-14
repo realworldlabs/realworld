@@ -1,4 +1,6 @@
 out/
 cache/
-broadcast/**/dry-run/
+broadcast/
 .env
+.devnet.pid
+deployments/devnet.json
