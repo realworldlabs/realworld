@@ -57,7 +57,7 @@ export function createApi(db: Db) {
     const [coins] = await db
       .select({
         coins: count(),
-        graduated: sql<number>`count(*) filter (where ${schema.coin.graduated})`,
+        graduated: sql<number>`(count(*) filter (where ${schema.coin.graduated}))::int`,
         volumeUsd: sql<number>`coalesce(sum(${schema.coin.volumeUsd}), 0)`,
       })
       .from(schema.coin);
