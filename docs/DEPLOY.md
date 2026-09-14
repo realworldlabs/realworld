@@ -2,21 +2,41 @@
 
 Urutan: **kontrak → indexer → keeper → website**. Semua langkah yang butuh tanda tangan wallet, login akun, atau private key dijalankan sendiri oleh pemilik proyek. Jangan pernah membagikan private key atau seed phrase ke siapa pun, termasuk ke asisten AI.
 
-> ⚠️ Kontrak belum diaudit. Deploy ke mainnet berarti uang sungguhan bisa hilang karena bug. Pertimbangkan audit eksternal dan batasi promosi sampai audit selesai.
+> ⚠️ Kontrak diluncurkan tanpa audit eksternal (keputusan pemilik proyek). Uang pengguna bisa hilang karena bug; mulai dengan jumlah kecil.
 
 ## 0. Yang perlu disiapkan
 
 | Kebutuhan | Keterangan |
 |---|---|
-| Wallet deployer | Berisi ± **0,006 ETH** di Robinhood Chain (deploy ~0,005 ETH) |
-| `OWNER` | Alamat multisig (mis. Safe) yang akan memiliki registry & factory |
-| `GUARDIAN` | Alamat multisig kedua, hanya bisa pause |
-| `TREASURY` | Alamat penerima fee protokol, fee launch, fee redeem |
-| `KEEPER` | Wallet **baru khusus keeper** (hot wallet) berisi ± 0,01 ETH untuk gas update harga |
+| 5 wallet | Dibuat oleh `contracts/script/generate-wallets.sh` (langkah 0a): deployer, owner, guardian, treasury, keeper |
 | Akun | GitHub, [Vercel](https://vercel.com) (website), [Railway](https://railway.com) (indexer + keeper + Postgres) |
 | Opsional | WalletConnect Cloud project id, webhook Discord/Slack untuk alert keeper, Pinata JWT untuk audit trail di IPFS |
 
 Tools lokal: Node 22+, pnpm, Foundry (`~/.foundry/bin`).
+
+### 0a. Buat semua wallet
+
+Jalankan di terminalmu sendiri (interaktif):
+
+```bash
+bash contracts/script/generate-wallets.sh
+```
+
+Untuk tiap wallet kamu diminta password (input tersembunyi). Private key disimpan terenkripsi di `~/.foundry/keystores/underlying-<peran>` dan **tidak pernah ditampilkan**; alamatnya ditulis ke `contracts/deploy/wallets.env`.
+
+**Backup** folder `~/.foundry/keystores/underlying-*` beserta password-nya (mis. di password manager + flashdisk offline). Kehilangan wallet `owner` = kehilangan hak admin protokol selamanya.
+
+### 0b. Isi saldo (fund) di Robinhood Chain
+
+| Wallet | Isi | Untuk |
+|---|---|---|
+| `DEPLOYER` | ± 0,006 ETH | deploy semua kontrak (~0,005 ETH) |
+| `OWNER` | ± 0,002 ETH | `acceptOwnership`, menambah aset nanti |
+| `GUARDIAN` | ± 0,001 ETH | pause darurat |
+| `KEEPER` | ± 0,01 ETH, isi ulang berkala | update harga, graduation, buyback |
+| `TREASURY` | tidak perlu | hanya menerima fee |
+
+Cek saldo: `cast balance <alamat> --ether --rpc-url https://rpc.mainnet.chain.robinhood.com`
 
 ## 1. Deploy kontrak
 
@@ -28,22 +48,27 @@ cd contracts && forge build && cd ..
 #     Gagal = sumber belum sepakat (mis. Steam vs Skinport); tunggu lalu ulangi. Jangan isi harga manual.
 pnpm --filter @rwa/keeper seed
 
-# 1b. Simpan wallet deployer ke keystore Foundry (akan diminta private key + password, hanya di terminal kamu)
-cast wallet import deployer --interactive
-
-# 1c. Simulasi dulu (tanpa broadcast). Di Windows, jalankan proxy RPC di terminal lain:
+# 1b. Simulasi dulu (tanpa broadcast). Di Windows, jalankan proxy RPC di terminal lain:
 #     node contracts/script/rpc-proxy.mjs
 cd contracts
-export OWNER=0x... GUARDIAN=0x... KEEPER=0x... TREASURY=0x...
-forge script script/DeployMainnet.s.sol --fork-url http://127.0.0.1:8548 --sender $(cast wallet address --account deployer)
+set -a; source deploy/wallets.env; set +a
+forge script script/DeployMainnet.s.sol --fork-url http://127.0.0.1:8548 --sender $DEPLOYER
 
-# 1d. Broadcast (sungguhan)
-forge script script/DeployMainnet.s.sol --rpc-url http://127.0.0.1:8548 --account deployer --broadcast --slow
+# 1c. Broadcast (sungguhan). Minta password wallet deployer.
+forge script script/DeployMainnet.s.sol --rpc-url http://127.0.0.1:8548 --account underlying-deployer --sender $DEPLOYER --broadcast --slow
 ```
 
 Hasil: `contracts/deployments/mainnet.json`. **Commit file ini** — indexer dan website membacanya.
 
-Setelah itu, dari multisig `OWNER`, panggil `acceptOwnership()` pada `AssetRegistry` dan `LaunchFactory` (alamat ada di `mainnet.json`).
+Setelah itu, wallet `OWNER` menerima kepemilikan (minta password wallet owner):
+
+```bash
+REGISTRY=$(node -e "console.log(require('./deployments/mainnet.json').assetRegistry)")
+FACTORY=$(node -e "console.log(require('./deployments/mainnet.json').launchFactory)")
+cast send $REGISTRY "acceptOwnership()" --account underlying-owner --rpc-url http://127.0.0.1:8548
+cast send $FACTORY "acceptOwnership()" --account underlying-owner --rpc-url http://127.0.0.1:8548
+cast call $REGISTRY "owner()(address)" --rpc-url http://127.0.0.1:8548   # harus sama dengan OWNER
+```
 
 Verifikasi (opsional): `forge verify-contract` ke Blockscout Robinhood Chain untuk tiap kontrak.
 
@@ -70,7 +95,7 @@ git push -u origin master
 1. **New** → GitHub repo yang sama → Config file path = `keeper/railway.json`.
 2. Variables:
    - `RPC_URL` = `https://rpc.mainnet.chain.robinhood.com`
-   - `KEEPER_PRIVATE_KEY` = private key wallet **KEEPER** (isi sendiri, sebagai secret)
+   - `KEEPER_PRIVATE_KEY` = private key wallet keeper. Ambil di terminalmu sendiri dengan `cast wallet private-key --account underlying-keeper`, tempel langsung ke Variables Railway, lalu bersihkan layar terminal. Jangan simpan di file atau chat.
    - `REGISTRY`, `PRICE_WALL`, `FACTORY`, `BUYBACK_VAULT` = dari `mainnet.json`
    - `ASSETS_FILE` = `assets.json`
    - `ALERT_WEBHOOK` = webhook Discord/Slack (disarankan)

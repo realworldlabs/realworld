@@ -8,3 +8,4 @@ deployments/devnet.json
 # simulation leftovers
 deploy/sim-assets.json
 deployments/sim.json
+deploy/wallets.env
