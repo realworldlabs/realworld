@@ -20,9 +20,9 @@ export function Nav() {
   return (
     <header className="nav">
       <div className="shell nav-inner">
-        <Link href="/" className="brand" aria-label="Underlying home">
-          <span className="brand-mark">U</span>
-          UNDERLYING
+        <Link href="/" className="brand" aria-label="RealWorld home">
+          <span className="brand-mark">R</span>
+          REALWORLD
         </Link>
         <nav className="nav-links">
           {LINKS.map((l) => (

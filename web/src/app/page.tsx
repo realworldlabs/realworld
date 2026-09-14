@@ -29,9 +29,9 @@ export default function BoardPage() {
         <div>
           <div className="eyebrow reveal">Robinhood Chain · Synthetic RWA pairs</div>
           <h1 className="display hero-title reveal" style={{ animationDelay: "80ms" }}>
-            Every coin
+            Memecoins,
             <br />
-            has an <em>underlying.</em>
+            priced <em>in the real world.</em>
           </h1>
         </div>
         <div className="reveal" style={{ animationDelay: "180ms" }}>

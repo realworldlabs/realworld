@@ -11,7 +11,7 @@ const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], 
 const body = Manrope({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-manrope" });
 
 export const metadata: Metadata = {
-  title: "Underlying — memecoins priced in real-world assets",
+  title: "RealWorld — memecoins priced in real-world assets",
   description:
     "Launch and trade memecoins paired with synthetic real-world assets: house prices, inflation, rates, trading cards and skins. On Robinhood Chain.",
 };
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main>{children}</main>
           <footer className="footer">
             <div className="shell" style={{ display: "flex", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
-              <span className="mono">UNDERLYING · ROBINHOOD CHAIN</span>
+              <span className="mono">REALWORLD · ROBINHOOD CHAIN</span>
               <span>
                 Memecoins are volatile and most go to zero. Synthetic assets carry keeper and redemption risk. Nothing here is
                 investment advice.

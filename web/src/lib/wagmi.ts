@@ -16,7 +16,7 @@ const wallets = connectorsForWallets(
         : [injectedWallet, rabbyWallet, metaMaskWallet, coinbaseWallet],
     },
   ],
-  { appName: "Underlying", projectId: WALLETCONNECT_PROJECT_ID ?? "unused" },
+  { appName: "RealWorld", projectId: WALLETCONNECT_PROJECT_ID ?? "unused" },
 );
 
 export const wagmiConfig = createConfig({

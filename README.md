@@ -1,4 +1,4 @@
-# Underlying
+# RealWorld
 
 A memecoin launchpad on Robinhood Chain where every coin is paired with a **synthetic real-world asset**: US inflation, euro-area house prices, the Fed funds rate, CS2 skins, trading cards, a Big Mac. Coins are bought with, priced in and pay creators in their underlying, and graduate into Uniswap v4 liquidity locked against it.
 
