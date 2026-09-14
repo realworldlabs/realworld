@@ -1,0 +1,37 @@
+{
+  "generatedAt": "2026-09-14T18:58:45.364Z",
+  "assets": [
+    {
+      "name": "US CPI-U Index",
+      "symbol": "sUSCPI",
+      "category": 0,
+      "unitScale": "1000000000000000000",
+      "priceX18": "334980000000000000000",
+      "metadataURI": "sources:bls:CUUR0000SA0,fredCsv:CPIAUCNS"
+    },
+    {
+      "name": "Effective Fed Funds Rate",
+      "symbol": "sFEDFUNDS",
+      "category": 0,
+      "unitScale": "1000000000000000000",
+      "priceX18": "3630000000000000000",
+      "metadataURI": "sources:nyfed:effr,fredCsv:EFFR"
+    },
+    {
+      "name": "Euro Area House Price Index",
+      "symbol": "sEUHPI",
+      "category": 0,
+      "unitScale": "1000000000000000000",
+      "priceX18": "157359400000000000000",
+      "metadataURI": "sources:eurostat:prc_hpi_q,fredCsv:QXMN628BIS"
+    },
+    {
+      "name": "AK-47 Redline (Field-Tested)",
+      "symbol": "sREDLINE",
+      "category": 1,
+      "unitScale": "1000000000000000000",
+      "priceX18": "33937750000000000000",
+      "metadataURI": "sources:steam:AK-47 | Redline (Field-Tested),skinport:AK-47 | Redline (Field-Tested)"
+    }
+  ]
+}
