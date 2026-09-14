@@ -1,4 +1,4 @@
 out/
 cache/
-broadcast/*/dry-run/
+broadcast/**/dry-run/
 .env
