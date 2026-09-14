@@ -1,4 +1,14 @@
 import { ponder, type Context } from "ponder:registry";
+import { createPublicClient, http } from "viem";
+
+/**
+ * Reads at the latest block instead of the event block. Everything read here is immutable after creation
+ * (asset config, token metadata, launch curve bounds), and the public Robinhood RPC is not an archive node:
+ * state older than a few minutes is pruned, so event-pinned reads fail during backfill.
+ */
+const chain = createPublicClient({
+  transport: http(process.env.PONDER_RPC_URL ?? "http://127.0.0.1:8545", { retryCount: 5, retryDelay: 1_000 }),
+});
 import {
   asset,
   assetPrice,
@@ -32,19 +42,19 @@ const CATEGORY = ["MACRO", "COLLECTIBLE"] as const;
 ponder.on("AssetRegistry:AssetAdded", async ({ event, context }) => {
   const { assetId, token, startTick } = event.args;
   const [config, key, synthIsToken0] = await Promise.all([
-    context.client.readContract({
+    chain.readContract({
       abi: assetRegistryAbi,
       address: context.contracts.AssetRegistry.address,
       functionName: "getConfig",
       args: [assetId],
     }),
-    context.client.readContract({
+    chain.readContract({
       abi: priceWallAbi,
       address: context.contracts.PriceWall.address,
       functionName: "poolKeyOf",
       args: [assetId],
     }),
-    context.client.readContract({
+    chain.readContract({
       abi: priceWallAbi,
       address: context.contracts.PriceWall.address,
       functionName: "synthIsToken0",
@@ -126,23 +136,23 @@ ponder.on("LaunchFactory:Launched", async ({ event, context }) => {
   const { token, creator, pair, poolId, creatorTaxBps, buybackBps } = event.args;
   const tokenAddress = { abi: launchTokenAbi, address: token } as const;
   const [name, symbol, logo, description, info, pairAsset, launch] = await Promise.all([
-    context.client.readContract({ ...tokenAddress, functionName: "name" }),
-    context.client.readContract({ ...tokenAddress, functionName: "symbol" }),
-    context.client.readContract({ ...tokenAddress, functionName: "logo" }),
-    context.client.readContract({ ...tokenAddress, functionName: "description" }),
-    context.client.readContract({
+    chain.readContract({ ...tokenAddress, functionName: "name" }),
+    chain.readContract({ ...tokenAddress, functionName: "symbol" }),
+    chain.readContract({ ...tokenAddress, functionName: "logo" }),
+    chain.readContract({ ...tokenAddress, functionName: "description" }),
+    chain.readContract({
       abi: launchHookAbi,
       address: await hookAddress(context),
       functionName: "poolInfo",
       args: [poolId],
     }),
-    context.client.readContract({
+    chain.readContract({
       abi: assetRegistryAbi,
       address: context.contracts.AssetRegistry.address,
       functionName: "assetIdOf",
       args: [pair],
     }),
-    context.client.readContract({
+    chain.readContract({
       abi: launchFactoryAbi,
       address: context.contracts.LaunchFactory.address,
       functionName: "getLaunch",
@@ -343,7 +353,7 @@ function abs(x: bigint): bigint {
 let cachedHook: Address | undefined;
 async function hookAddress(context: Context): Promise<Address> {
   if (!cachedHook) {
-    cachedHook = await context.client.readContract({
+    cachedHook = await chain.readContract({
       abi: [{ type: "function", name: "hook", inputs: [], outputs: [{ type: "address" }], stateMutability: "view" }] as const,
       address: context.contracts.LaunchFactory.address,
       functionName: "hook",
