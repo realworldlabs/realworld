@@ -4785,6 +4785,11 @@ export const launchRouterAbi = [
             "name": "zeroForOne",
             "type": "bool",
             "internalType": "bool"
+          },
+          {
+            "name": "sqrtPriceLimitX96",
+            "type": "uint160",
+            "internalType": "uint160"
           }
         ]
       },
