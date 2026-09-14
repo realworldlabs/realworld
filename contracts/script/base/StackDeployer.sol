@@ -42,11 +42,10 @@ abstract contract StackDeployer is Script {
         LaunchRouter router;
     }
 
-    function _deployRwa(address deployer, address guardian, address keeper, address treasury)
+    function _deployRwa(IPoolManager manager, address usdg, address deployer, address guardian, address keeper, address treasury)
         internal
         returns (RwaStack memory s)
     {
-        IPoolManager manager = IPoolManager(RobinhoodChain.POOL_MANAGER);
         s.registry = new AssetRegistry(deployer, guardian, keeper, treasury);
 
         uint160 flags = uint160(Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.BEFORE_SWAP_FLAG);
@@ -56,16 +55,19 @@ abstract contract StackDeployer is Script {
         s.wallHook = new WallHook{salt: salt}(manager, s.registry);
         require(address(s.wallHook) == hookAddr, "wall hook address mismatch");
 
-        s.priceWall = new PriceWall(manager, s.registry, IHooks(address(s.wallHook)), RobinhoodChain.USDG);
-        s.vault = new RedemptionVault(s.registry, RobinhoodChain.USDG);
+        s.priceWall = new PriceWall(manager, s.registry, IHooks(address(s.wallHook)), usdg);
+        s.vault = new RedemptionVault(s.registry, usdg);
         s.registry.wire(address(s.priceWall), address(s.vault));
     }
 
-    function _deployLaunchpad(address deployer, IAssetRegistry registry, address guardian, address treasury)
-        internal
-        returns (LaunchStack memory s)
-    {
-        IPoolManager manager = IPoolManager(RobinhoodChain.POOL_MANAGER);
+    function _deployLaunchpad(
+        IPoolManager manager,
+        address usdg,
+        address deployer,
+        IAssetRegistry registry,
+        address guardian,
+        address treasury
+    ) internal returns (LaunchStack memory s) {
         uint160 flags = uint160(
             Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.BEFORE_SWAP_FLAG
                 | Hooks.AFTER_SWAP_FLAG | Hooks.BEFORE_SWAP_RETURNS_DELTA_FLAG | Hooks.AFTER_SWAP_RETURNS_DELTA_FLAG
@@ -78,13 +80,13 @@ abstract contract StackDeployer is Script {
 
         s.tokenDeployer = new LaunchTokenDeployer();
         s.factory = new LaunchFactory(
-            deployer, manager, registry, RobinhoodChain.USDG, s.hook, s.tokenDeployer, treasury, guardian, LAUNCH_FEE
+            deployer, manager, registry, usdg, s.hook, s.tokenDeployer, treasury, guardian, LAUNCH_FEE
         );
         s.tokenDeployer.setFactory(address(s.factory));
         s.escrow = new FeeEscrow(manager, address(s.hook));
         s.buyback = new BuybackVault(manager, s.hook, s.factory, s.escrow, BUYBACK_VESTING);
         s.locker = new LaunchLocker(manager, address(s.factory));
-        s.router = new LaunchRouter(manager, s.factory, registry, RobinhoodChain.USDG);
+        s.router = new LaunchRouter(manager, s.factory, registry, usdg);
 
         s.hook.wire(address(s.factory), address(s.locker), s.escrow, s.buyback);
         s.factory.setLocker(s.locker);

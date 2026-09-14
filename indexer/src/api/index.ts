@@ -193,9 +193,10 @@ app.get("/portfolio/:address", async (c) => {
   if (!isAddress(address)) return c.json({ error: "bad address" }, 400);
   const account = getAddress(address);
   const holdings = await db
-    .select({ balance: schema.holder.balance, coin: schema.coin })
+    .select({ balance: schema.holder.balance, coin: schema.coin, asset: schema.asset })
     .from(schema.holder)
     .innerJoin(schema.coin, eq(schema.holder.token, schema.coin.token))
+    .leftJoin(schema.asset, eq(schema.coin.assetId, schema.asset.assetId))
     .where(and(eq(schema.holder.account, account), gt(schema.holder.balance, 0n)))
     .orderBy(desc(schema.coin.marketCapUsd));
   const fees = await db.select().from(schema.feeBalance).where(eq(schema.feeBalance.account, account));
@@ -213,7 +214,8 @@ app.get("/portfolio/:address", async (c) => {
 
   return json(c, {
     holdings: holdings.map((h) => ({
-      ...h,
+      balance: h.balance,
+      coin: { ...h.coin, asset: h.asset },
       valueUsd: (Number(h.balance) / 1e18) * h.coin.priceUsd,
     })),
     fees: fees.map((f) => ({ ...f, claimable: f.credited - f.claimed })),

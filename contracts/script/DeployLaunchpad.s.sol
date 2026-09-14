@@ -3,7 +3,9 @@ pragma solidity 0.8.26;
 
 import {console2} from "forge-std/Script.sol";
 import {IAssetRegistry} from "../src/rwa/interfaces/IAssetRegistry.sol";
+import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {StackDeployer} from "./base/StackDeployer.sol";
+import {RobinhoodChain} from "./RobinhoodChain.sol";
 
 /// @notice Deploys the launchpad on top of an existing RWA registry and adds the default launch config.
 /// @dev env: REGISTRY, OWNER, GUARDIAN, TREASURY. Example:
@@ -13,7 +15,12 @@ contract DeployLaunchpad is StackDeployer {
         address finalOwner = vm.envAddress("OWNER");
         vm.startBroadcast();
         s = _deployLaunchpad(
-            msg.sender, IAssetRegistry(vm.envAddress("REGISTRY")), vm.envAddress("GUARDIAN"), vm.envAddress("TREASURY")
+            IPoolManager(RobinhoodChain.POOL_MANAGER),
+            RobinhoodChain.USDG,
+            msg.sender,
+            IAssetRegistry(vm.envAddress("REGISTRY")),
+            vm.envAddress("GUARDIAN"),
+            vm.envAddress("TREASURY")
         );
         if (finalOwner != msg.sender) s.factory.transferOwnership(finalOwner);
         vm.stopBroadcast();
