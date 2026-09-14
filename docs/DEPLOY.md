@@ -85,30 +85,30 @@ git remote add origin git@github.com:<kamu>/<repo>.git
 git push -u origin master
 ```
 
-## 3. Indexer (Railway)
+## 3–4. Indexer + keeper (Railway)
 
-1. Railway → **New Project** → **Deploy from GitHub repo** → pilih repo.
-2. Tambah **PostgreSQL** ke project.
-3. Pada service repo: Settings → **Config file path** = `indexer/railway.json`, Root directory = `/` (root repo).
-4. Variables:
-   - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`
-   - `PONDER_RPC_URL` = `https://rpc.mainnet.chain.robinhood.com` (atau RPC privat jika kena rate limit)
-   - `DEPLOYMENTS_FILE` = `../contracts/deployments/mainnet.json`
-5. Settings → Networking → **Generate Domain**. Catat URL-nya, mis. `https://rwa-indexer.up.railway.app` → cek `/ready` dan `/stats`.
+Railway menghapus Config-as-code untuk service baru, jadi setiap service memakai Dockerfile-nya sendiri (`indexer/Dockerfile`, `keeper/Dockerfile`, build context = root repo). Semuanya bisa dibuat dari CLI setelah `railway login`:
 
-## 4. Keeper (Railway, service kedua di project yang sama)
+```bash
+railway link                       # pilih project (harus sudah punya database Postgres)
+railway add --service indexer --repo realworldlabs/realworld \
+  --variables RAILWAY_DOCKERFILE_PATH=indexer/Dockerfile \
+  --variables 'DATABASE_URL=${{Postgres.DATABASE_URL}}' \
+  --variables PONDER_RPC_URL=https://rpc.mainnet.chain.robinhood.com \
+  --variables DEPLOYMENTS_FILE=../contracts/deployments/mainnet.json
+railway domain --service indexer   # URL publik indexer
 
-1. **New** → GitHub repo yang sama → Config file path = `keeper/railway.json`.
-2. Variables:
-   - `RPC_URL` = `https://rpc.mainnet.chain.robinhood.com`
-   - `KEEPER_PRIVATE_KEY` = private key wallet keeper. Ambil di terminalmu sendiri dengan `cast wallet private-key --account underlying-keeper`, tempel langsung ke Variables Railway, lalu bersihkan layar terminal. Jangan simpan di file atau chat.
-   - `REGISTRY`, `PRICE_WALL`, `FACTORY`, `BUYBACK_VAULT` = dari `mainnet.json`
-   - `ASSETS_FILE` = `assets.json`
-   - `ALERT_WEBHOOK` = webhook Discord/Slack (disarankan)
-   - `PINATA_JWT` = (opsional) agar audit trail tersimpan di IPFS
-3. Pantau log: setiap loop menulis `price moved` / `price update skipped` / `price not agreed`.
+railway add --service keeper --repo realworldlabs/realworld \
+  --variables RAILWAY_DOCKERFILE_PATH=keeper/Dockerfile \
+  --variables RPC_URL=https://rpc.mainnet.chain.robinhood.com \
+  --variables REGISTRY=<assetRegistry> --variables PRICE_WALL=<priceWall> \
+  --variables FACTORY=<launchFactory> --variables BUYBACK_VAULT=<buybackVault> \
+  --variables ASSETS_FILE=assets.json
+```
 
-Keeper **tidak butuh** port publik. Isi wallet keeper secukupnya saja.
+Lalu di dashboard Railway → service **keeper** → Variables, tambah `KEEPER_PRIVATE_KEY` (private key wallet keeper; tempel langsung, jangan simpan di file). Opsional: `ALERT_WEBHOOK`, `PINATA_JWT`.
+
+Sukses kalau `https://<domain-indexer>/ready` menjawab 200 dan `/stats` menampilkan jumlah aset, dan log keeper (`railway logs --service keeper`) menulis `keeper started`.
 
 ## 5. Website (Vercel)
 
