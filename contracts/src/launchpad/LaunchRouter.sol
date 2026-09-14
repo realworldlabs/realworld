@@ -42,6 +42,8 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
     struct Hop {
         PoolKey key;
         bool zeroForOne;
+        /// @dev 0 means no limit. Buys on an active curve stop exactly at the curve end.
+        uint160 sqrtPriceLimitX96;
     }
 
     constructor(IPoolManager poolManager_, LaunchFactory factory_, IAssetRegistry registry_, address usdg_) {
@@ -216,7 +218,9 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
                 SwapParams({
                     zeroForOne: h.zeroForOne,
                     amountSpecified: -int256(amount),
-                    sqrtPriceLimitX96: h.zeroForOne ? TickMath.MIN_SQRT_PRICE + 1 : TickMath.MAX_SQRT_PRICE - 1
+                    sqrtPriceLimitX96: h.sqrtPriceLimitX96 != 0
+                        ? h.sqrtPriceLimitX96
+                        : (h.zeroForOne ? TickMath.MIN_SQRT_PRICE + 1 : TickMath.MAX_SQRT_PRICE - 1)
                 }),
                 ""
             );
@@ -257,11 +261,11 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
         address pair = _pairOf(token);
         if (payWith == pair) {
             hops = new Hop[](1);
-            hops[0] = _hopInto(factory.poolKeyOf(token), token);
+            hops[0] = _curveBuyHop(token);
         } else if (payWith == usdg) {
             hops = new Hop[](2);
             hops[0] = _wallHop(pair);
-            hops[1] = _hopInto(factory.poolKeyOf(token), token);
+            hops[1] = _curveBuyHop(token);
         } else {
             revert UnsupportedPayment();
         }
@@ -274,14 +278,22 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
         return _hopInto(key, synth);
     }
 
+    /// @dev Buy hop into a launch pool. While the curve is active the price limit is the curve end:
+    ///      otherwise a rounding remainder would drag the price through the empty range above the curve.
+    function _curveBuyHop(address token) private view returns (Hop memory h) {
+        LaunchFactory.Launch memory l = factory.getLaunch(token);
+        h = _hopInto(l.key, token);
+        if (!l.graduated) h.sqrtPriceLimitX96 = TickMath.getSqrtPriceAtTick(l.tokenIsToken0 ? l.curveUpper : l.curveLower);
+    }
+
     /// @dev Swap that ends holding `target`.
     function _hopInto(PoolKey memory key, address target) private pure returns (Hop memory) {
-        return Hop({key: key, zeroForOne: Currency.unwrap(key.currency1) == target});
+        return Hop({key: key, zeroForOne: Currency.unwrap(key.currency1) == target, sqrtPriceLimitX96: 0});
     }
 
     /// @dev Swap that spends `source`.
     function _hop(PoolKey memory key, address source) private pure returns (Hop memory) {
-        return Hop({key: key, zeroForOne: Currency.unwrap(key.currency0) == source});
+        return Hop({key: key, zeroForOne: Currency.unwrap(key.currency0) == source, sqrtPriceLimitX96: 0});
     }
 
     function _pairOf(address token) private view returns (address) {

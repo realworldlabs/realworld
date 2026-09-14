@@ -2,6 +2,8 @@
 pragma solidity 0.8.26;
 
 import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
+import {StateLibrary} from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
+import {TickMath} from "@uniswap/v4-core/src/libraries/TickMath.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {LaunchFactory} from "../../src/launchpad/LaunchFactory.sol";
 import {LaunchRouter} from "../../src/launchpad/LaunchRouter.sol";
@@ -125,6 +127,8 @@ abstract contract LaunchRouterTestBase is LaunchFixture {
         router.buy(token, synth, pairIn, 0, bob, block.timestamp);
         vm.stopPrank();
         assertTrue(factory.isReadyToMigrate(token));
+        // The buy stops exactly at the curve end instead of running through the empty range above it.
+        assertEq(_sqrtPrice(token), _curveEndSqrtPrice(token));
         // Only the capped input was pulled, and fees were charged on that alone (2% total, protocol 0.3%).
         assertApproxEqAbs(IERC20(synth).balanceOf(bob), pairIn - cap, 2); // the cap carries a 1-2 wei rounding margin that is refunded
         uint256 protocolFee = escrow.balanceOf(launchTreasury, Currency.wrap(synth)) - treasuryBefore;
@@ -146,6 +150,15 @@ abstract contract LaunchRouterTestBase is LaunchFixture {
         assertTrue(factory.isReadyToMigrate(token));
         assertEq(usdgToken.balanceOf(alice), cap);
         assertEq(router.maxBuyInput(token, address(usdgToken)), 0);
+    }
+
+    function _sqrtPrice(address t) internal view returns (uint160 sqrtP) {
+        (sqrtP,,,) = StateLibrary.getSlot0(manager, factory.poolKeyOf(t).toId());
+    }
+
+    function _curveEndSqrtPrice(address t) internal view returns (uint160) {
+        LaunchFactory.Launch memory l = factory.getLaunch(t);
+        return TickMath.getSqrtPriceAtTick(l.tokenIsToken0 ? l.curveUpper : l.curveLower);
     }
 
     /// @dev Escrow ERC-6909 claims always equal the sum of credited balances.
