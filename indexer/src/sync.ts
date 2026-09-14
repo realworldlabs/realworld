@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { decodeEventLog, type Abi, type Address } from "viem";
 import {
   assetRegistryAbi,
@@ -72,19 +72,37 @@ async function indexSpan(db: Db, from: bigint, to: bigint) {
 
   await db.transaction(async (tx) => {
     for (const e of events) await handlers[e.name]!(tx as unknown as Db, e);
-    await tx
-      .insert(s.syncState)
-      .values({ key: CURSOR, lastBlock: Number(to) })
-      .onConflictDoUpdate({ target: s.syncState.key, set: { lastBlock: Number(to) } });
+    // Compare-and-set on the cursor: two instances overlap during a redeploy, and only the one that owns the
+    // preceding block may commit, so no span is applied twice (balances and pots are incremental).
+    const moved = await tx
+      .update(s.syncState)
+      .set({ lastBlock: Number(to) })
+      .where(and(eq(s.syncState.key, CURSOR), eq(s.syncState.lastBlock, Number(from) - 1)))
+      .returning({ lastBlock: s.syncState.lastBlock });
+    if (moved.length === 0) throw new StaleCursor();
   });
   status.lastBlock = Number(to);
   return events.length;
 }
 
+class StaleCursor extends Error {
+  constructor() {
+    super("cursor moved by another instance");
+  }
+}
+
+async function readCursor(db: Db): Promise<bigint> {
+  await db
+    .insert(s.syncState)
+    .values({ key: CURSOR, lastBlock: deployments.startBlock - 1 })
+    .onConflictDoNothing();
+  const row = await db.query.syncState.findFirst({ where: eq(s.syncState.key, CURSOR) });
+  return BigInt(row!.lastBlock + 1);
+}
+
 export async function runSync(db: Db, log: (m: string, extra?: Record<string, unknown>) => void) {
   await loadKnownTokens(db);
-  const cursor = await db.query.syncState.findFirst({ where: eq(s.syncState.key, CURSOR) });
-  let next = BigInt(cursor ? cursor.lastBlock + 1 : deployments.startBlock);
+  let next = await readCursor(db);
   status.lastBlock = Number(next - 1n);
   log("sync starting", { from: Number(next), rpcs: config.rpcUrls.length, logRange: config.logRange });
 
@@ -104,6 +122,14 @@ export async function runSync(db: Db, log: (m: string, extra?: Record<string, un
       }
       status.ready = true;
     } catch (err) {
+      if (err instanceof StaleCursor) {
+        // Another instance is ahead: pick up from where it left off and let the newer tokens it found load.
+        await loadKnownTokens(db);
+        next = await readCursor(db);
+        log("cursor taken over", { from: Number(next) });
+        await sleep(config.pollMs);
+        continue;
+      }
       status.lastError = err instanceof Error ? err.message : String(err);
       log("sync error", { error: status.lastError.slice(0, 300), at: Number(next) });
       await sleep(Math.max(config.pollMs, 5_000));
