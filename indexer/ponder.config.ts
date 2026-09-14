@@ -37,6 +37,9 @@ export default createConfig({
       rpc: process.env.PONDER_RPC_URL ?? "http://127.0.0.1:8545",
       // Arbitrum Orbit chain: small, frequent blocks. Keep eth_getLogs ranges bounded for the public RPC.
       ethGetLogsBlockRange: Number(process.env.PONDER_LOG_RANGE ?? 5_000),
+      // The public RPC returns 429 above roughly this rate; blocks arrive ~5/s so poll in batches.
+      maxRequestsPerSecond: Number(process.env.PONDER_MAX_RPS ?? 8),
+      pollingInterval: Number(process.env.PONDER_POLL_MS ?? 4_000),
     },
   },
   contracts: {

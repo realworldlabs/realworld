@@ -25,7 +25,12 @@ export type AssetConfig = z.infer<typeof assetSchema> & { resolvedRules: Agreeme
 
 const envSchema = z.object({
   RPC_URL: z.string().url(),
-  KEEPER_PRIVATE_KEY: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
+  // MetaMask exports keys without the 0x prefix; accept both.
+  KEEPER_PRIVATE_KEY: z
+    .string()
+    .trim()
+    .transform((k) => (k.startsWith("0x") ? k : `0x${k}`))
+    .pipe(z.string().regex(/^0x[0-9a-fA-F]{64}$/, "expected a 64-hex-character private key")),
   REGISTRY: address,
   PRICE_WALL: address,
   FACTORY: address.optional(),
