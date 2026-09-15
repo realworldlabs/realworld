@@ -46,8 +46,8 @@ export function Footer() {
             RealWorld
           </span>
           <p className="hint" style={{ maxWidth: 300, marginTop: 10 }}>
-            Memecoins priced in real-world assets: inflation, rates, house prices, rent, wages and everyday goods. On Robinhood
-            Chain.
+            Launch any coin — meme, tech, community — priced in a real-world asset: inflation, rates, house prices, rent, wages
+            and everyday goods. On Robinhood Chain.
           </p>
         </div>
         {COLUMNS.map((c) => (
@@ -73,7 +73,7 @@ export function Footer() {
       </div>
       <div className="shell footer-bottom">
         <span className="mono">© 2026 REALWORLD · realworld.family</span>
-        <span>Memecoins are volatile and most go to zero. Synthetic underlyings carry keeper and backing risk. Nothing here is investment advice.</span>
+        <span>New tokens are volatile and many go to zero. Synthetic underlyings carry keeper and backing risk. Nothing here is investment advice.</span>
       </div>
     </footer>
   );

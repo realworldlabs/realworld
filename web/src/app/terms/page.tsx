@@ -16,7 +16,7 @@ export default function TermsPage() {
 
         <h2>What the site is</h2>
         <p>
-          The site is an interface to open smart contracts deployed on Robinhood Chain: a launchpad for memecoins and a set of
+          The site is an interface to open smart contracts deployed on Robinhood Chain: a token launchpad and a set of
           synthetic tokens (&ldquo;underlyings&rdquo;) that track real-world prices. The contracts are permissionless; anyone can
           use them with or without this site. The site does not custody assets, execute trades on your behalf or give advice.
         </p>
@@ -30,7 +30,7 @@ export default function TermsPage() {
 
         <h2>Risks</h2>
         <p>
-          Memecoins are speculative and most lose all value. A coin paired with an underlying also moves with that underlying.
+          Newly launched tokens are speculative and many lose all value. A coin paired with an underlying also moves with that underlying.
           Underlyings are synthetic: their price is set by a keeper within on-chain limits, from public sources that can be
           wrong, late or manipulated, and their backing can run short after a price rise. Software can contain bugs. You may
           lose everything you put in. Use amounts you can afford to lose.

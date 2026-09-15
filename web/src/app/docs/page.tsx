@@ -12,7 +12,7 @@ export default function DocsPage() {
       <div className="prose">
         <h2>What this is</h2>
         <p>
-          RealWorld is a memecoin launchpad on Robinhood Chain where every coin is paired with an <strong>underlying</strong>: a synthetic
+          RealWorld is a token launchpad on Robinhood Chain where every coin — meme, tech, community, anything — is paired with an <strong>underlying</strong>: a synthetic
           token that tracks a real-world price such as US inflation, euro-area house prices, the Fed funds rate, a trading card,
           a CS2 skin or a Big Mac. You buy the coin with its underlying, it is priced in the underlying, the creator is paid in
           the underlying, and it graduates into liquidity locked against the underlying.
@@ -64,7 +64,7 @@ export default function DocsPage() {
 
         <h2 id="risk">What can go wrong</h2>
         <p>
-          These are memecoins and most go to zero. A coin priced in an underlying carries that underlying&apos;s risk too: if the
+          These are newly launched tokens and many go to zero. A coin priced in an underlying carries that underlying&apos;s risk too: if the
           underlying falls, your coin falls with it. Underlyings depend on a single keeper operator, bounded by on-chain limits,
           and on wall backing that can run short after a price rise. Collectible prices can be manipulated at the source. Nothing
           here is investment advice.

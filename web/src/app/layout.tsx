@@ -11,9 +11,9 @@ const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], 
 const body = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-sans" });
 
 export const metadata: Metadata = {
-  title: "RealWorld — memecoins priced in real-world assets",
+  title: "RealWorld — coins priced in the real world",
   description:
-    "Launch and trade memecoins paired with synthetic real-world assets: house prices, inflation, rates, trading cards and skins. On Robinhood Chain.",
+    "Launch and trade any coin paired with a synthetic real-world asset: inflation, rates, house prices, rent, wages and everyday goods. On Robinhood Chain.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
