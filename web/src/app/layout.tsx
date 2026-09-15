@@ -4,7 +4,6 @@ import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Nav } from "@/components/Nav";
-import { TickerTape } from "@/components/TickerTape";
 
 const display = Fraunces({ subsets: ["latin"], weight: "variable", style: ["normal", "italic"], axes: ["opsz"], variable: "--font-fraunces" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-mono" });
@@ -21,7 +20,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${display.variable} ${mono.variable} ${body.variable}`}>
       <body>
         <Providers>
-          <TickerTape />
           <Nav />
           <main>{children}</main>
           <footer className="footer">
