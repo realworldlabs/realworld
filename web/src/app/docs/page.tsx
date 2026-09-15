@@ -28,6 +28,11 @@ export default function DocsPage() {
           the pot, <strong>every holder takes the same pro-rata haircut</strong>. One underlying can never drain another.
         </p>
         <p>
+          Because of this, coins paired with an underlying are <strong>sold here</strong>: the order ticket routes coin → underlying →
+          vault in one transaction. External trading terminals cannot route an underlying back to USDG and will label such a
+          coin as unsellable or &ldquo;100% sell tax&rdquo;. That is the wall doing its job, not a tax.
+        </p>
+        <p>
           If the keeper misses an asset&apos;s heartbeat (45 days for macro, 48 hours for collectibles), new launches against it are
           blocked. Trading and redemption never stop. A guardian can pause price moves and launches, but not trading.
         </p>

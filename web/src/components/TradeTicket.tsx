@@ -169,7 +169,7 @@ export function TradeTicket({ coin }: { coin: CoinDetail }) {
             {asset === "usdg"
               ? side === "buy"
                 ? `USDG buys ${pairSymbol} at its wall price, then ${coin.symbol}, in one transaction.`
-                : `Proceeds in ${pairSymbol} are redeemed for USDG from its vault (0.3% fee, haircut if the pot is short).`
+                : `Proceeds in ${pairSymbol} are redeemed for USDG from its vault (0.3% fee, haircut if the pot is short). Sell here: external terminals cannot route ${pairSymbol} back to USDG and show it as unsellable.`
               : `Trade directly in ${pairSymbol}.`}
           </div>
         </div>
