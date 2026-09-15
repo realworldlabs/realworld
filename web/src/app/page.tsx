@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CoinArt, CurveBar, Delta, Skeleton } from "@/components/bits";
+import { FeaturedToken } from "@/components/FeaturedToken";
 import { useAssets, useCoins, useStats, type Coin } from "@/lib/api";
 import { compactNumber, formatPrice, formatUsd, shortAddress, timeAgo } from "@/lib/format";
 
@@ -76,6 +77,8 @@ export default function ExplorePage() {
           Create a coin
         </Link>
       </div>
+
+      <FeaturedToken />
 
       <div className="pairs">
         <button className="pair-chip" data-active={underlying === undefined} onClick={() => setUnderlying(undefined)}>

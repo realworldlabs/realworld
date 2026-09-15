@@ -109,6 +109,8 @@ railway add --service keeper --repo realworldlabs/realworld \
 
 Lalu di dashboard Railway → service **keeper** → Variables, tambah `KEEPER_PRIVATE_KEY` (private key wallet keeper; tempel langsung, jangan simpan di file). Opsional: `ALERT_WEBHOOK`, `PINATA_JWT`.
 
+**Token RealWorld (diluncurkan di pons v2):** setelah launch, set `FEATURED_TOKEN=<alamat token>` di Variables service indexer (tidak perlu build ulang web). Indexer membaca harga tiap menit dari curve pons (sebelum graduasi) atau pool Uniswap v4 (sesudahnya) dan menyajikannya di `GET /featured`; halaman Explore menampilkan kartu "RealWorld token" dengan tombol Trade on pons. Hapus variabelnya untuk menyembunyikan kartu. Catatan: token harus diluncurkan lewat factory pons **v2** (`0x7eD5…EC7e`); launch v1 tidak terbaca.
+
 Sukses kalau `https://<domain-indexer>/ready` menjawab 200 dan `/stats` menampilkan jumlah aset, dan log keeper (`railway logs --service keeper`) menulis `keeper started`.
 
 ## 5. Website (Vercel)

@@ -33,6 +33,10 @@ DATABASE_URL=postgres://... pnpm start
 | `CONFIRMATIONS` | `2` | blocks behind the head to index |
 | `DATABASE_URL` | — | Postgres; without it a local PGlite database is used |
 | `PORT` | `42069` | API port |
+| `PINATA_JWT` | — | enables `POST /upload` (coin images pinned to IPFS) |
+| `FEATURED_TOKEN` | — | the RealWorld token, launched on pons v2; polled for `GET /featured` |
+| `FEATURED_POLL_MS` | `60000` | how often the featured token is re-read |
+| `PONS_FACTORY`, `PONS_HOOK` | pons v2 mainnet | override only if pons redeploys |
 
 `GET /ready` returns 200 once the initial backfill reaches the chain head; `GET /health` always returns the sync status.
 
@@ -47,6 +51,7 @@ DATABASE_URL=postgres://... pnpm start
 | `GET /coins/:token/candles?interval=60\|300\|3600\|86400&from=&to=` | OHLC in USD |
 | `GET /assets`, `GET /assets/:id` | assets, price history, redemptions |
 | `GET /portfolio/:address` | holdings, claimable fees, created coins, trades |
+| `GET /featured` | the RealWorld token (pons v2): phase, price in its pair and USD, market cap, graduation progress, 24h change, sparkline; 404 when unset |
 
 Addresses in responses are lowercase.
 

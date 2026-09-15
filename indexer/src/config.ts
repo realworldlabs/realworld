@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { Address } from "viem";
+import { isAddress, type Address } from "viem";
 
 export interface Deployments {
   chainId: number;
@@ -39,4 +39,10 @@ export const config = {
   port: Number(env.PORT ?? 42069),
   /** Pinata JWT for coin image uploads (POST /upload). Uploads are disabled without it. */
   pinataJwt: env.PINATA_JWT,
+  /** The RealWorld token, launched on pons v2: polled for the featured card (GET /featured). Off when unset. */
+  featuredToken: env.FEATURED_TOKEN && isAddress(env.FEATURED_TOKEN) ? (env.FEATURED_TOKEN as Address) : undefined,
+  featuredPollMs: Number(env.FEATURED_POLL_MS ?? 60_000),
+  /** pons v2 contracts on Robinhood Chain (ponsfamily.com/docs/v2 → Contracts). */
+  ponsFactory: (env.PONS_FACTORY ?? "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e") as Address,
+  ponsHook: (env.PONS_HOOK ?? "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044") as Address,
 };

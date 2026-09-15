@@ -2,6 +2,7 @@ import { serve } from "@hono/node-server";
 import { createApi } from "./api.ts";
 import { config, deploymentsFile } from "./config.ts";
 import { openDb } from "./db.ts";
+import { runFeatured } from "./featured.ts";
 import { runSync } from "./sync.ts";
 
 const log = (message: string, extra: Record<string, unknown> = {}) =>
@@ -17,3 +18,6 @@ runSync(db, log).catch((err) => {
   log("sync crashed", { error: err instanceof Error ? err.stack ?? err.message : String(err) });
   process.exit(1);
 });
+
+// Independent of the event sync: the RealWorld token lives on pons, so its card is fed by polling.
+runFeatured(db).catch((err) => log("featured poller crashed", { error: err instanceof Error ? err.stack ?? err.message : String(err) }));

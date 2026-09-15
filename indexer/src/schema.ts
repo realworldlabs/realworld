@@ -162,6 +162,17 @@ export const redemption = pgTable("redemption", {
   timestamp: integer("timestamp").notNull(),
 });
 
+/** Price samples of the featured (pons-launched) token, one per poll, kept for a week. */
+export const featuredPrice = pgTable(
+  "featured_price",
+  {
+    token: text("token").notNull(),
+    timestamp: integer("timestamp").notNull(),
+    priceInPair: doublePrecision("price_in_pair").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.token, t.timestamp] })],
+);
+
 /** Idempotent DDL, kept next to the table definitions so the two cannot drift silently. */
 export const DDL = [
   sql`create table if not exists sync_state (key text primary key, last_block integer not null)`,
@@ -183,4 +194,5 @@ export const DDL = [
   sql`create table if not exists fee_balance (account text not null, currency text not null, credited numeric(78,0) not null, claimed numeric(78,0) not null, primary key (account, currency))`,
   sql`create table if not exists buyback (id text primary key, token text not null, pair_spent numeric(78,0) not null, tokens_bought numeric(78,0) not null, timestamp integer not null)`,
   sql`create table if not exists redemption (id text primary key, asset_id integer not null, account text not null, synth_in numeric(78,0) not null, usdg_out numeric(78,0) not null, fee numeric(78,0) not null, timestamp integer not null)`,
+  sql`create table if not exists featured_price (token text not null, timestamp integer not null, price_in_pair double precision not null, primary key (token, timestamp))`,
 ];

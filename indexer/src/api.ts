@@ -4,6 +4,7 @@ import { and, asc, count, desc, eq, gt, gte, ilike, inArray, lte, notInArray, or
 import { isAddress, type Address } from "viem";
 import { config, deployments } from "./config.ts";
 import type { Db } from "./db.ts";
+import { featured, featuredError } from "./featured.ts";
 import * as schema from "./schema.ts";
 import { status } from "./sync.ts";
 
@@ -139,6 +140,15 @@ export function createApi(db: Db) {
 
   app.get("/health", (c) => c.json({ ok: true, ...status }));
   app.get("/ready", (c) => (status.ready ? c.json(status) : c.json(status, 503)));
+
+  // ---------------------------------------------------------------- featured token
+
+  /** The RealWorld token (launched on pons), or 404 while it is not configured or not yet read. */
+  app.get("/featured", (c) => {
+    if (!config.featuredToken) return c.json({ error: "no featured token" }, 404);
+    if (!featured) return c.json({ error: featuredError ?? "not read yet" }, 404);
+    return json(c, featured);
+  });
 
   // ---------------------------------------------------------------- 24h aggregates
 

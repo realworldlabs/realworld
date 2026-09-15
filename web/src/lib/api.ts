@@ -121,6 +121,32 @@ export interface Stats {
   headBlock: number;
 }
 
+/** The RealWorld token, launched on pons v2 and polled by the indexer. */
+export interface Featured {
+  token: Address;
+  name: string;
+  symbol: string;
+  decimals: number;
+  logo: string;
+  description: string;
+  socials: { twitter: string; telegram: string; discord: string; website: string; farcaster: string };
+  pair: { address: Address; symbol: string; decimals: number };
+  phase: "curve" | "swept" | "pool" | "rescued";
+  curve: Address;
+  poolId: Hex | null;
+  priceInPair: number;
+  pairUsd: number | null;
+  priceUsd: number | null;
+  supply: number;
+  marketCapInPair: number;
+  marketCapUsd: number | null;
+  progress: number;
+  change24h: number | null;
+  spark: number[];
+  ponsUrl: string;
+  updatedAt: number;
+}
+
 export interface Health {
   ok: boolean;
   lastBlock: number;
@@ -138,6 +164,19 @@ async function get<T>(path: string): Promise<T> {
 const LIVE = { refetchInterval: 5_000 } as const;
 
 export const useStats = () => useQuery({ queryKey: ["stats"], queryFn: () => get<Stats>("/stats"), ...LIVE });
+/** null while no featured token is configured (404), so the card simply does not render. */
+export const useFeatured = () =>
+  useQuery({
+    queryKey: ["featured"],
+    queryFn: async () => {
+      const res = await fetch(`${INDEXER_URL}/featured`);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`/featured: ${res.status}`);
+      return res.json() as Promise<Featured>;
+    },
+    refetchInterval: 30_000,
+    retry: false,
+  });
 export const useHealth = () => useQuery({ queryKey: ["health"], queryFn: () => get<Health>("/health"), refetchInterval: 10_000 });
 export const useAssets = () => useQuery({ queryKey: ["assets"], queryFn: () => get<Asset[]>("/assets"), ...LIVE });
 export const useAsset = (id: number) =>
