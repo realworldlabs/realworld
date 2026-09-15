@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#ffffff"/><rect width="1024" height="1024" rx="220" fill="#0f5b3f"/>
+    <g transform="rotate(-18 512 512)">
+      <circle cx="512" cy="512" r="300" fill="#ffffff"/>
+      <!-- meridians: two ellipses traced with the background colour -->
+      <ellipse cx="512" cy="512" rx="126" ry="306" fill="none" stroke="#0f5b3f" stroke-width="45"/>
+      <!-- equator, curved as on a tilted sphere -->
+      <path d="M 206 512 Q 512 614 818 512" fill="none" stroke="#0f5b3f" stroke-width="45"/>
+      <!-- the cut: a notch at the top right, the "real-world" piece leaving the globe -->
+      <path d="M 677 197 L 827 347 L 827 197 Z" fill="#0f5b3f"/>
+    </g></svg>

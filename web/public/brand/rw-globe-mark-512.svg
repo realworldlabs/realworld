@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+    <defs><mask id="cuts"><rect width="512" height="512" fill="white"/>
+      <g transform="rotate(-18 256 256)" fill="none" stroke="black" stroke-width="35.328">
+        <ellipse cx="256" cy="256" rx="98.9184" ry="240.2304"/>
+        <path d="M 15.769599999999997 256 Q 256 336.0768 496.23040000000003 256"/>
+      </g>
+      <g transform="rotate(-18 256 256)"><path d="M 385.53600000000006 8.70399999999998 L 503.29600000000005 126.46399999999997 L 503.29600000000005 8.70399999999998 Z" fill="black"/></g>
+    </mask></defs>
+    <circle cx="256" cy="256" r="235.52" fill="#0e0e0e" mask="url(#cuts)"/>
+  </svg>

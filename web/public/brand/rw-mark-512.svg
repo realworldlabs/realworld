@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-    <defs><mask id="gap"><rect width="512" height="512" fill="white"/><line x1="402.0224" y1="171.21280000000002" x2="496.23040000000003" y2="171.21280000000002" stroke="black" stroke-width="116.34688000000001"/></mask></defs>
-    <g fill="none" stroke="#111111" stroke-width="44.7488" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="256" cy="256" r="197.8368" mask="url(#gap)"/>
-      <path d="M 124.10879999999997 350.208 H 213.6064 V 260.7104 H 303.104 V 171.21280000000002 H 496.23040000000003"/>
-    </g>
-  </svg>
