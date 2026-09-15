@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+    <rect width="1024" height="1024" fill="#ffffff"/>
+    
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="512" cy="512" r="283.8528" stroke="#111111" stroke-width="64.2048"/>
+      <!-- gap in the ring where the line leaves the globe -->
+      <line x1="721.5104" y1="390.3488" x2="856.6784" y2="390.3488" stroke="#ffffff" stroke-width="166.93248000000003" stroke-linecap="butt"/>
+      <path d="M 322.7648 647.168 H 451.1744 V 518.7584 H 579.5840000000001 V 390.3488 H 856.6784" stroke="#111111" stroke-width="64.2048"/>
+    </g>
+  </svg>
