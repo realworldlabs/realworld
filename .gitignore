@@ -4,3 +4,6 @@ dist/
 *.log
 web/out/
 web/tsconfig.tsbuildinfo
+
+# editor/agent local config
+.claude/
