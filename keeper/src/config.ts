@@ -24,7 +24,11 @@ const assetSchema = z.object({
 export type AssetConfig = z.infer<typeof assetSchema> & { resolvedRules: AgreementRules };
 
 const envSchema = z.object({
-  RPC_URL: z.string().url(),
+  /** One URL, or a comma-separated list tried in order. */
+  RPC_URL: z
+    .string()
+    .transform((s) => s.split(",").map((u) => u.trim()).filter(Boolean))
+    .pipe(z.array(z.string().url()).min(1)),
   // MetaMask exports keys without the 0x prefix; accept both.
   KEEPER_PRIVATE_KEY: z
     .string()

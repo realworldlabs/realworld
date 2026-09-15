@@ -88,13 +88,26 @@ export function createApi(db: Db) {
         return c.json({ jsonrpc: "2.0", id: (call as { id?: unknown })?.id ?? null, error: { code: -32601, message: "method not allowed" } }, 403);
       }
     }
-    const upstream = await fetch(config.rpcUrls[0]!, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(20_000),
-    });
-    return c.body(await upstream.text(), upstream.status as 200, { "content-type": "application/json" });
+    // Try each configured RPC in order; a provider that is down or rate-limited is skipped for this request.
+    let last: { status: number; text: string } = { status: 502, text: JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32000, message: "no rpc available" } }) };
+    for (const url of config.rpcUrls) {
+      try {
+        const upstream = await fetch(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(15_000),
+        });
+        const text = await upstream.text();
+        if (upstream.ok && !text.includes("limit reached") && !text.startsWith("<")) {
+          return c.body(text, 200, { "content-type": "application/json" });
+        }
+        last = { status: upstream.status, text };
+      } catch (err) {
+        last = { status: 502, text: JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32000, message: String(err) } }) };
+      }
+    }
+    return c.body(last.text, last.status as 200, { "content-type": "application/json" });
   });
 
   // ---------------------------------------------------------------- image upload

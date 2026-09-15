@@ -2,6 +2,7 @@ import {
   createPublicClient,
   createWalletClient,
   defineChain,
+  fallback,
   http,
   type Address,
   type Hex,
@@ -46,8 +47,11 @@ export interface KeeperChain {
 
 export function viemChain(env: Env): KeeperChain {
   const account = privateKeyToAccount(env.KEEPER_PRIVATE_KEY as Hex);
-  // The keeper shares its RPC with the indexer, whose backfill bursts trigger 429s: back off for ~1.5 min before giving up.
-  const transport = http(env.RPC_URL, { timeout: 30_000, retryCount: 6, retryDelay: 1_500 });
+  // The keeper shares its RPCs with the indexer: rotate across the list on errors and back off on rate limits.
+  const transport = fallback(
+    env.RPC_URL.map((u) => http(u, { timeout: 30_000, retryCount: 3, retryDelay: 1_500 })),
+    { rank: false, retryCount: 2 },
+  );
   const pub: PublicClient = createPublicClient({ chain: robinhoodChain, transport });
   const wallet: WalletClient = createWalletClient({ chain: robinhoodChain, transport, account });
   const registry = env.REGISTRY as Address;
