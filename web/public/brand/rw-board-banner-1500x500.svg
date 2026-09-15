@@ -52,10 +52,10 @@
       <path d="M 150.4 81.6 L 174.4 105.6 L 174.4 81.6 Z" fill="#f3eee2"/>
     </g>
     <text x="196" y="150" font-family="IBM Plex Sans" font-size="60" font-weight="700" letter-spacing="-1.8" fill="#16150f">realworld<tspan font-weight="400" fill="#6b6b6b">.family</tspan></text>
-    <text x="76" y="262" font-family="Fraunces" font-size="54" font-weight="600" letter-spacing="-0.5" fill="#16150f">Memecoins, priced</text>
+    <text x="76" y="262" font-family="Fraunces" font-size="54" font-weight="600" letter-spacing="-0.5" fill="#16150f">Launch coins priced</text>
     <text x="76" y="320" font-family="Fraunces" font-size="54" font-weight="500" font-style="italic" fill="#0f5b3f">in the real world.</text>
-    <text x="78" y="362" font-family="IBM Plex Sans" font-size="19" fill="#4a4739">Every coin trades against inflation, rent, wages, gas or eggs —</text>
-    <text x="78" y="388" font-family="IBM Plex Sans" font-size="19" fill="#4a4739">prices that two public sources agree on, moved on-chain.</text>
+    <text x="78" y="362" font-family="IBM Plex Sans" font-size="19" fill="#4a4739">Meme, tech or community — every coin trades against inflation,</text>
+    <text x="78" y="388" font-family="IBM Plex Sans" font-size="19" fill="#4a4739">rent, wages, gas or eggs, at prices two public sources agree on.</text>
     <g font-family="IBM Plex Mono" font-size="13" font-weight="500">
       <rect x="78" y="416" width="150" height="30" rx="15" fill="#16150f"/><text x="153" y="436" text-anchor="middle" fill="#f3eee2">ROBINHOOD CHAIN</text>
       <rect x="238" y="416" width="128" height="30" rx="15" fill="none" stroke="#0f5b3f" stroke-width="1.5"/><text x="302" y="436" text-anchor="middle" fill="#0f5b3f">8 UNDERLYINGS</text>
