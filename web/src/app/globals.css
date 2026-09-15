@@ -766,6 +766,39 @@ button {
   background: var(--gold-dim);
 }
 
+/* underlying seals */
+.asset-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.asset-icon svg {
+  display: block;
+}
+
+.asset-icon-green {
+  color: var(--green);
+}
+
+.chip-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chip-icon .asset-icon {
+  color: currentColor;
+  margin-left: -2px;
+}
+
+.pair-chip .asset-icon {
+  color: currentColor;
+  margin-right: -2px;
+}
+
 .tag-dot {
   width: 5px;
   height: 5px;

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Asset, Coin } from "@/lib/api";
 import { imageUrl } from "@/lib/config";
+import { AssetIcon } from "@/components/AssetIcon";
 
 /** Renders logos from http(s) or ipfs:// URLs; falls back to the ticker initials on an ink block. */
 export function CoinAvatar({ coin, size = 30 }: { coin: Pick<Coin, "logo" | "symbol">; size?: number }) {
@@ -48,10 +49,16 @@ export function CurveBar({ progress, graduated, width }: { progress: number; gra
 }
 
 export function UnderlyingChip({ asset }: { asset: Asset | null }) {
-  if (!asset) return <span className="chip">USDG</span>;
+  if (!asset)
+    return (
+      <span className="chip chip-icon">
+        <AssetIcon symbol="USDG" size={15} />
+        USDG
+      </span>
+    );
   return (
-    <span className="chip chip-amber" title={asset.name}>
-      <span className="tag-dot" />
+    <span className="chip chip-amber chip-icon" title={asset.name}>
+      <AssetIcon symbol={asset.symbol} size={15} />
       {asset.symbol}
     </span>
   );

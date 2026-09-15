@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AssetIcon } from "@/components/AssetIcon";
 import { Delta, Sparkline } from "@/components/bits";
 import { useAssets, type Asset } from "@/lib/api";
 import { formatAmount, formatPrice, timeAgo } from "@/lib/format";
@@ -84,9 +85,7 @@ function AssetRow({ asset: a, onOpen }: { asset: Asset; onOpen: () => void }) {
     <tr onClick={onOpen}>
       <td>
         <Link href={`/asset?id=${a.assetId}`} className="coin-cell" onClick={(e) => e.stopPropagation()}>
-          <span className="avatar" style={{ width: 30, height: 30, fontSize: 11, background: "var(--bg-4)", color: "var(--amber)" }}>
-            {a.symbol.slice(1, 4)}
-          </span>
+          <AssetIcon symbol={a.symbol} size={30} />
           <span>
             <div className="coin-sym">{a.symbol}</div>
             <div className="coin-name">{a.name}</div>

@@ -9,6 +9,7 @@ import { erc20Abi, formatUnits, parseUnits, type Address } from "viem";
 import { useAccount, useConfig, useReadContract } from "wagmi";
 import { getPublicClient, simulateContract } from "wagmi/actions";
 import { AssetChart } from "@/components/AssetChart";
+import { AssetIcon } from "@/components/AssetIcon";
 import { CoinAvatar, Copy, CurveBar, Delta } from "@/components/bits";
 import { useAsset, useCoins, type Asset } from "@/lib/api";
 import { deployments, robinhood, TOKEN_DECIMALS, USDG_DECIMALS } from "@/lib/config";
@@ -53,9 +54,7 @@ function AssetView() {
     <div className="shell page">
       <div className="panel coin-head reveal">
         <div className="coin-ident">
-          <span className="avatar" style={{ width: 44, height: 44, fontSize: 14, background: "var(--paper-3)", color: "var(--green)" }}>
-            {asset.symbol.slice(1, 4)}
-          </span>
+          <AssetIcon symbol={asset.symbol} size={44} className="asset-icon-green" />
           <div style={{ minWidth: 0 }}>
             <div className="row" style={{ flexWrap: "wrap" }}>
               <span className="coin-title" style={{ textTransform: "none" }}>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CoinArt, CurveBar, Delta, Skeleton } from "@/components/bits";
 import { FeaturedToken } from "@/components/FeaturedToken";
+import { AssetIcon } from "@/components/AssetIcon";
 import { useAssets, useCoins, useStats, type Coin } from "@/lib/api";
 import { compactNumber, formatPrice, formatUsd, shortAddress, timeAgo } from "@/lib/format";
 
@@ -87,6 +88,7 @@ export default function ExplorePage() {
         </button>
         {(assets ?? []).map((a) => (
           <button key={a.assetId} className="pair-chip" data-active={underlying === String(a.assetId)} onClick={() => setUnderlying(underlying === String(a.assetId) ? undefined : String(a.assetId))} title={a.name}>
+            <AssetIcon symbol={a.symbol} size={20} />
             <span className="sym">{a.symbol}</span>
             <span className="amber">${formatPrice(a.priceUsd)}</span>
             <Delta value={a.change24h} />
@@ -94,6 +96,7 @@ export default function ExplorePage() {
           </button>
         ))}
         <button className="pair-chip" data-active={underlying === "usdg"} onClick={() => setUnderlying(underlying === "usdg" ? undefined : "usdg")}>
+          <AssetIcon symbol="USDG" size={20} />
           <span className="sym">USDG</span>
           <span className="amber">$1.00</span>
           <span className="mute">plain dollars</span>
@@ -171,7 +174,10 @@ function CoinCard({ coin: c, index = 0, shelf = false }: { coin: Coin; index?: n
       <div className="card-img">
         <CoinArt coin={c} />
         <div className="card-badges">
-          <span className="chip chip-amber">{c.asset ? c.asset.symbol : "USDG"}</span>
+          <span className="chip chip-amber chip-icon">
+            <AssetIcon symbol={c.asset ? c.asset.symbol : "USDG"} size={15} />
+            {c.asset ? c.asset.symbol : "USDG"}
+          </span>
           {c.creatorTaxBps > 0 && <span className="chip">TAX {(c.creatorTaxBps / 100).toFixed(2).replace(/\.?0+$/, "")}%</span>}
         </div>
         {c.graduated && <span className="grad-ribbon">GRADUATED</span>}

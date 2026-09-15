@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { parseEventLogs, parseUnits, toHex, type Address } from "viem";
 import { useAccount, useBalance, useConfig, useReadContract } from "wagmi";
 import { getPublicClient, simulateContract } from "wagmi/actions";
+import { AssetIcon } from "@/components/AssetIcon";
 import { CoinAvatar } from "@/components/bits";
 import { useAssets } from "@/lib/api";
 import { deployments, INDEXER_URL, LAUNCH_FEE, USDG_DECIMALS } from "@/lib/config";
@@ -246,7 +247,8 @@ export default function LaunchPage() {
               <div className="pair-options">
                 {launchable.map((a) => (
                   <button key={a.assetId} className="pair-option" data-active={pair === a.token} onClick={() => setPair(a.token)}>
-                    <span className="mono" style={{ fontSize: 14, color: "var(--fg)" }}>
+                    <span className="mono row" style={{ fontSize: 14, color: "var(--fg)", gap: 8 }}>
+                      <AssetIcon symbol={a.symbol} size={22} />
                       {a.symbol}
                     </span>
                     <span className="hint truncate">{a.name}</span>
@@ -256,7 +258,8 @@ export default function LaunchPage() {
                   </button>
                 ))}
                 <button className="pair-option" data-active={pair === ""} onClick={() => setPair("")}>
-                  <span className="mono" style={{ fontSize: 14, color: "var(--fg)" }}>
+                  <span className="mono row" style={{ fontSize: 14, color: "var(--fg)", gap: 8 }}>
+                    <AssetIcon symbol="USDG" size={22} />
                     USDG
                   </span>
                   <span className="hint">Plain dollars · no underlying</span>
