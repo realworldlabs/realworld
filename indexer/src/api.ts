@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { and, asc, count, desc, eq, gt, gte, ilike, inArray, lte, notInArray, or, sql } from "drizzle-orm";
 import { isAddress, type Address } from "viem";
-import { deployments } from "./config.ts";
+import { config, deployments } from "./config.ts";
 import type { Db } from "./db.ts";
 import * as schema from "./schema.ts";
 import { status } from "./sync.ts";
@@ -19,6 +19,26 @@ const PROTOCOL: string[] = [
 ]
   .filter((v): v is Address => typeof v === "string")
   .map((v) => v.toLowerCase());
+
+/** Read-only chain access plus raw transaction submission; nothing that touches node state or logs. */
+const RPC_METHODS = new Set([
+  "eth_chainId",
+  "net_version",
+  "eth_blockNumber",
+  "eth_call",
+  "eth_estimateGas",
+  "eth_gasPrice",
+  "eth_maxPriorityFeePerGas",
+  "eth_feeHistory",
+  "eth_getBalance",
+  "eth_getCode",
+  "eth_getTransactionCount",
+  "eth_getBlockByNumber",
+  "eth_getBlockByHash",
+  "eth_getTransactionByHash",
+  "eth_getTransactionReceipt",
+  "eth_sendRawTransaction",
+]);
 
 /** Every address is stored lowercase, so lookups normalise the same way. */
 const lc = (a: string) => a.toLowerCase();
@@ -45,6 +65,34 @@ export function createApi(db: Db) {
       .groupBy(schema.holder.token);
     return new Map(rows.map((r) => [r.token, Number(r.n)]));
   }
+
+  // ---------------------------------------------------------------- rpc proxy
+
+  // The web app reads the chain through here: the public Robinhood RPC is rate-limited and flaky from browsers,
+  // and the paid RPC key must not ship in the bundle. Wallets still send transactions through their own RPC.
+  app.post("/rpc", async (c) => {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "parse error" } }, 400);
+    }
+    const calls = Array.isArray(body) ? body : [body];
+    if (calls.length > 20) return c.json({ jsonrpc: "2.0", id: null, error: { code: -32600, message: "batch too large" } }, 400);
+    for (const call of calls) {
+      const method = (call as { method?: unknown })?.method;
+      if (typeof method !== "string" || !RPC_METHODS.has(method)) {
+        return c.json({ jsonrpc: "2.0", id: (call as { id?: unknown })?.id ?? null, error: { code: -32601, message: "method not allowed" } }, 403);
+      }
+    }
+    const upstream = await fetch(config.rpcUrls[0]!, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(20_000),
+    });
+    return c.body(await upstream.text(), upstream.status as 200, { "content-type": "application/json" });
+  });
 
   // ---------------------------------------------------------------- health
 

@@ -22,7 +22,9 @@ const wallets = connectorsForWallets(
 export const wagmiConfig = createConfig({
   chains: [robinhood],
   connectors: DEVNET ? [mock({ accounts: [DEVNET_ACCOUNT], features: { reconnect: true } }), ...wallets] : wallets,
-  transports: { [robinhood.id]: http() },
+  // Reads go through the indexer's /rpc proxy (see NEXT_PUBLIC_RPC_URL); batch to keep the request count low and
+  // retry, since the upstream is rate-limited. Wallets submit transactions through their own RPC.
+  transports: { [robinhood.id]: http(undefined, { batch: { batchSize: 20, wait: 50 }, retryCount: 5, retryDelay: 600, timeout: 25_000 }) },
   ssr: true,
-  pollingInterval: 1_500,
+  pollingInterval: 4_000,
 });
