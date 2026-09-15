@@ -127,7 +127,7 @@ Sukses kalau `https://<domain-indexer>/ready` menjawab 200 dan `/stats` menampil
 ## 6. Cek setelah live
 
 - Board menampilkan underlying di ticker tape dan halaman **Underlyings** menampilkan harga yang sama dengan `pnpm --filter @rwa/keeper probe`.
-- Launch koin kecil (first buy ~5 USDG) dari wallet uji → muncul di board dalam ± 1 menit.
+- Launch koin dari wallet uji (first buy opsional; cukup 0.0005 ETH launch fee + gas) → muncul di board dalam ± 1 menit.
 - Beli & jual kecil, klaim fee di Portfolio.
 - Keeper log: tidak ada `error` berulang.
 

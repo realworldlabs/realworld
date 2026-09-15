@@ -116,7 +116,6 @@ contract LaunchFactory is ILaunchFactory, IUnlockCallback, Ownable2Step, Reentra
     error PairNotAllowed();
     error TaxTooHigh();
     error InvalidBuybackBps();
-    error FirstBuyRequired();
     error SlippageExceeded();
     error UnknownLaunch();
     error AlreadyGraduated();
@@ -249,7 +248,6 @@ contract LaunchFactory is ILaunchFactory, IUnlockCallback, Ownable2Step, Reentra
         if (keccak256(abi.encode(c)) != expectedConfigHash) revert ConfigMismatch();
         if (p.creatorTaxBps > c.maxCreatorTaxBps) revert TaxTooHigh();
         if (p.buybackBps > BPS) revert InvalidBuybackBps();
-        if (firstBuyPair == 0) revert FirstBuyRequired();
         address creator = msg.sender == router ? p.creator : msg.sender;
         if (creator == address(0)) revert ZeroAddress();
         address feeRecipient = p.feeRecipient == address(0) ? creator : p.feeRecipient;
@@ -285,7 +283,8 @@ contract LaunchFactory is ILaunchFactory, IUnlockCallback, Ownable2Step, Reentra
         int24 startTick = l.tokenIsToken0 ? l.curveLower : l.curveUpper;
         poolManager.initialize(l.key, TickMath.getSqrtPriceAtTick(startTick));
 
-        IERC20(pair).safeTransferFrom(msg.sender, address(this), firstBuyPair);
+        // The first buy is optional: without one the pool simply opens at the start tick.
+        if (firstBuyPair > 0) IERC20(pair).safeTransferFrom(msg.sender, address(this), firstBuyPair);
         (uint256 used, uint256 bought, uint256 curveTokens) = abi.decode(
             poolManager.unlock(abi.encode(ACTION_LAUNCH, token, c.curveSupply, firstBuyPair, creator)),
             (uint256, uint256, uint256)
@@ -400,6 +399,11 @@ contract LaunchFactory is ILaunchFactory, IUnlockCallback, Ownable2Step, Reentra
         );
         uint256 curveTokens = uint256(uint128(-(l.tokenIsToken0 ? added.amount0() : added.amount1())));
         require(curveTokens <= curveSupply);
+        Currency tokenC = Currency.wrap(token);
+        if (firstBuyPair == 0) {
+            _pay(tokenC, curveTokens);
+            return abi.encode(uint256(0), uint256(0), curveTokens);
+        }
 
         // First buy: pair in, exact input. Pays the normal fees.
         BalanceDelta d = poolManager.swap(
@@ -416,7 +420,6 @@ contract LaunchFactory is ILaunchFactory, IUnlockCallback, Ownable2Step, Reentra
         uint256 used = uint256(uint128(-pairSwap));
         uint256 bought = uint256(uint128(tokenSwap));
 
-        Currency tokenC = Currency.wrap(token);
         Currency pairC = l.tokenIsToken0 ? l.key.currency1 : l.key.currency0;
         _pay(tokenC, curveTokens);
         _pay(pairC, used);

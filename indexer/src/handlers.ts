@@ -155,7 +155,11 @@ export const handlers: Record<string, Handler> = {
     // The creator's first buy trades before Launched is emitted, so it is recorded from the event.
     const pairDecimals = assetId === null ? USDG_DECIMALS : SYNTH_DECIMALS;
     const pairUsd = assetId === null ? 1 : ((await db.query.asset.findFirst({ where: eq(s.asset.assetId, assetId) }))?.priceUsd ?? 0);
-    const firstPrice = firstBuyTokens === 0n ? 0 : Number(firstBuyPair) / 10 ** pairDecimals / (Number(firstBuyTokens) / 1e18);
+    // Without a first buy the pool sits at the curve start, so the coin is priced there.
+    const firstPrice =
+      firstBuyTokens === 0n
+        ? priceFromSqrt(curveStart, tokenIsToken0, SYNTH_DECIMALS, pairDecimals)
+        : Number(firstBuyPair) / 10 ** pairDecimals / (Number(firstBuyTokens) / 1e18);
     const firstValueUsd = (Number(firstBuyPair) / 10 ** pairDecimals) * pairUsd;
 
     await db

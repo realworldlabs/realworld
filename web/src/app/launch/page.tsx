@@ -32,7 +32,7 @@ export default function LaunchPage() {
   const [pair, setPair] = useState<Address | "">("");
   const [taxBps, setTaxBps] = useState(0);
   const [buybackBps, setBuybackBps] = useState(0);
-  const [firstBuy, setFirstBuy] = useState("10");
+  const [firstBuy, setFirstBuy] = useState("");
 
   const { data: configHash } = useReadContract({
     address: deployments.launchFactory,
@@ -58,7 +58,6 @@ export default function LaunchPage() {
   const errors = [
     !name.trim() && "Name",
     !/^[A-Z0-9]{2,12}$/.test(symbol) && "Ticker (2-12 letters/digits)",
-    firstBuyRaw === 0n && "First buy",
   ].filter(Boolean) as string[];
 
   async function submit() {
@@ -92,7 +91,7 @@ export default function LaunchPage() {
           ],
           value: LAUNCH_FEE,
         }),
-      [{ token: deployments.usdg, spender: deployments.launchRouter, amount: firstBuyRaw }],
+      firstBuyRaw > 0n ? [{ token: deployments.usdg, spender: deployments.launchRouter, amount: firstBuyRaw }] : [],
     );
     if (!hash) return;
     const receipt = await getPublicClient(config)!.getTransactionReceipt({ hash });
@@ -196,10 +195,11 @@ export default function LaunchPage() {
                 <span className="hint">Spent buying your coin back, vested to you over 12 months.</span>
               </div>
               <div className="field span-2">
-                <label htmlFor="fb">First buy · USDG</label>
-                <input id="fb" className="input mono" inputMode="decimal" value={firstBuy} onChange={(e) => setFirstBuy(e.target.value.replace(/[^0-9.]/g, ""))} />
+                <label htmlFor="fb">First buy · USDG (optional)</label>
+                <input id="fb" className="input mono" inputMode="decimal" placeholder="0" value={firstBuy} onChange={(e) => setFirstBuy(e.target.value.replace(/[^0-9.]/g, ""))} />
                 <span className="hint">
-                  Required so the pool has a price. {selected ? `Converted to ${selected.symbol} at its wall price.` : ""}
+                  Buy the first tokens in the same transaction, before anyone else. Leave empty to open the curve untouched.
+                  {selected ? ` Converted to ${selected.symbol} at its wall price.` : ""}
                 </span>
               </div>
             </div>
@@ -246,7 +246,7 @@ export default function LaunchPage() {
           </div>
           <div className="ticket-row">
             <span>First buy ≈</span>
-            <span>{formatAmount(BigInt(Math.floor(estTokens)), 0)} tokens</span>
+            <span>{firstBuyRaw > 0n ? `${formatAmount(BigInt(Math.floor(estTokens)), 0)} tokens` : "none"}</span>
           </div>
           <div className="ticket-row">
             <span>Launch fee</span>

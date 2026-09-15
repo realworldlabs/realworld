@@ -8,8 +8,10 @@ import {StackDeployer} from "./base/StackDeployer.sol";
 import {RobinhoodChain} from "./RobinhoodChain.sol";
 
 /// @notice Deploys the launchpad on top of an existing RWA registry and adds the default launch config.
-/// @dev env: REGISTRY, OWNER, GUARDIAN, TREASURY. Example:
-///      forge script script/DeployLaunchpad.s.sol --rpc-url robinhood --broadcast --account deployer
+///         Used to (re)deploy the launchpad alone; the RWA stack and its underlyings stay in place.
+/// @dev env: REGISTRY, OWNER, GUARDIAN, TREASURY, KEEPER; DEPLOYMENTS_OUT (optional) is an existing deployments
+///      JSON whose launchpad addresses are updated in place. Example:
+///      forge script script/DeployLaunchpad.s.sol --rpc-url robinhood --broadcast --account deployer --slow
 contract DeployLaunchpad is StackDeployer {
     function run() external returns (LaunchStack memory s) {
         address finalOwner = vm.envAddress("OWNER");
@@ -22,8 +24,20 @@ contract DeployLaunchpad is StackDeployer {
             vm.envAddress("GUARDIAN"),
             vm.envAddress("TREASURY")
         );
+        s.buyback.setOperator(vm.envAddress("KEEPER"), true);
         if (finalOwner != msg.sender) s.factory.transferOwnership(finalOwner);
         vm.stopBroadcast();
+
+        string memory out = vm.envOr("DEPLOYMENTS_OUT", string(""));
+        if (bytes(out).length > 0) {
+            vm.writeJson(vm.toString(address(s.hook)), out, ".launchHook");
+            vm.writeJson(vm.toString(address(s.factory)), out, ".launchFactory");
+            vm.writeJson(vm.toString(address(s.tokenDeployer)), out, ".launchTokenDeployer");
+            vm.writeJson(vm.toString(address(s.escrow)), out, ".feeEscrow");
+            vm.writeJson(vm.toString(address(s.buyback)), out, ".buybackVault");
+            vm.writeJson(vm.toString(address(s.locker)), out, ".launchLocker");
+            vm.writeJson(vm.toString(address(s.router)), out, ".launchRouter");
+        }
 
         console2.log("LaunchHook   ", address(s.hook));
         console2.log("LaunchFactory", address(s.factory));

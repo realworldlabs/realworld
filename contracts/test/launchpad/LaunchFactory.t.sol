@@ -113,12 +113,22 @@ abstract contract LaunchFactoryTestBase is LaunchFixture {
         factory.launch{value: LAUNCH_FEE}(p, configId, synth, h, 1e18, 0);
     }
 
-    function test_launch_revertsWithoutFirstBuy() public {
-        LaunchFactory.LaunchParams memory p = launchParams("X", 0, 0);
+    function test_launch_withoutFirstBuy_opensAtStartTickAndTrades() public {
+        LaunchFactory.LaunchParams memory p = launchParams("FREE", 0, 0);
         bytes32 h = factory.configHash(configId);
         vm.prank(creator);
-        vm.expectRevert(LaunchFactory.FirstBuyRequired.selector);
-        factory.launch{value: LAUNCH_FEE}(p, configId, address(usdgToken), h, 0, 0);
+        address t = factory.launch{value: LAUNCH_FEE}(p, configId, address(usdgToken), h, 0, 0);
+
+        assertEq(IERC20(t).balanceOf(creator), 0);
+        assertApproxEqRel(tokenPriceUsd(t), 4e12, 2.5e16);
+        assertApproxEqRel(factory.getLaunch(t).reserve, 285_714_286e18, 1e12);
+        assertEq(IERC20(t).balanceOf(address(factory)), factory.getLaunch(t).reserve);
+
+        // The curve is live: a normal buy works and pays the usual fees.
+        usdgToken.mint(alice, 100e6);
+        (int256 pairChange, int256 tokenChange) = swapLaunch(t, alice, true, -100e6);
+        assertEq(pairChange, -100e6);
+        assertGt(tokenChange, 0);
     }
 
     // ---------- trading & fees ----------

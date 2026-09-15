@@ -35,7 +35,7 @@ export default function DocsPage() {
         <h2>Launching</h2>
         <p>
           Pick a name, ticker, image and underlying. Set an optional creator tax (up to 5%) and an optional buyback share. Pay
-          the 0.0005 ETH launch fee and a first buy, which can be paid in USDG. All of it is fixed at launch.
+          the 0.0005 ETH launch fee and, if you want to be first in, a first buy paid in USDG. All of it is fixed at launch.
         </p>
         <p>
           Supply is 1,000,000,000. 714,285,714 tokens are sold on a concentrated curve spanning 25,000 ticks, roughly 12.2× from

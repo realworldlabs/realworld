@@ -100,6 +100,7 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
     }
 
     /// @notice Launch through the router so the first buy can be paid in USDG. `p.creator` must be the caller.
+    ///         `amountIn` may be zero for a launch without a first buy.
     function launch(
         LaunchFactory.LaunchParams calldata p,
         uint32 configId,
@@ -110,16 +111,18 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
         uint256 minFirstBuyTokens
     ) external payable nonReentrant returns (address token) {
         if (p.creator != msg.sender) revert NotCreator();
-        IERC20(payWith).safeTransferFrom(msg.sender, address(this), amountIn);
+        if (payWith != pair && payWith != usdg) revert UnsupportedPayment();
 
         uint256 pairAmount = amountIn;
-        if (payWith != pair) {
-            if (payWith != usdg) revert UnsupportedPayment();
-            Hop[] memory hops = new Hop[](1);
-            hops[0] = _wallHop(pair);
-            (pairAmount,) = _execute(hops, amountIn, Currency.wrap(usdg), Currency.wrap(pair), address(this), false);
+        if (amountIn > 0) {
+            IERC20(payWith).safeTransferFrom(msg.sender, address(this), amountIn);
+            if (payWith != pair) {
+                Hop[] memory hops = new Hop[](1);
+                hops[0] = _wallHop(pair);
+                (pairAmount,) = _execute(hops, amountIn, Currency.wrap(usdg), Currency.wrap(pair), address(this), false);
+            }
+            IERC20(pair).forceApprove(address(factory), pairAmount);
         }
-        IERC20(pair).forceApprove(address(factory), pairAmount);
         token = factory.launch{value: msg.value}(p, configId, pair, expectedConfigHash, pairAmount, minFirstBuyTokens);
 
         _refund(pair, msg.sender);

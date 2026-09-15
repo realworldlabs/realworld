@@ -38,6 +38,17 @@ abstract contract LaunchRouterTestBase is LaunchFixture {
         assertApproxEqRel(tokenPriceUsd(token), 4e12, 2.5e16);
     }
 
+    function test_launchViaRouter_withoutFirstBuy() public {
+        LaunchFactory.LaunchParams memory p = launchParams("ZERO", 0, 0);
+        bytes32 h = factory.configHash(configId);
+        vm.prank(creator);
+        address t = router.launch{value: LAUNCH_FEE}(p, configId, synth, h, address(usdgToken), 0, 0);
+        assertEq(factory.getLaunch(t).creator, creator);
+        assertEq(IERC20(t).balanceOf(creator), 0);
+        assertApproxEqRel(tokenPriceUsd(t), 4e12, 2.5e16);
+        assertEq(IERC20(synth).balanceOf(address(router)), 0);
+    }
+
     function test_launchViaRouter_rejectsSpoofedCreator() public {
         LaunchFactory.LaunchParams memory p = launchParams("FAKE", 0, 0);
         usdgToken.mint(alice, 10e6);

@@ -124,7 +124,7 @@ All assets are added through `AssetRegistry`, so this list can change without re
 
 | Contract | Responsibility |
 |---|---|
-| `LaunchFactory` | `launch(params, configId, pairAsset)` payable. Deploys the token, initializes the v4 pool, places the curve position, and executes the mandatory first buy. Launch fee 0.0005 ETH. Accepts only `AssetRegistry` assets that are enabled and not stale, plus USDG. Also exposes `migrate(token)`. |
+| `LaunchFactory` | `launch(params, configId, pairAsset)` payable. Deploys the token, initializes the v4 pool, places the curve position, and executes the optional first buy. Launch fee 0.0005 ETH. Accepts only `AssetRegistry` assets that are enabled and not stale, plus USDG. Also exposes `migrate(token)`. |
 | `LaunchToken` | Fixed supply of 1,000,000,000 (18 decimals). No owner, mint, blacklist, or transfer tax. On-chain `logo`, `description`, `socials`. |
 | `LaunchHook` | Singleton v4 hook for all launch pools. The pool LP fee is 0; the hook charges all fees in the pair asset. On a buy the fee comes off the input (`beforeSwap` delta); on a sell it comes off the output (`afterSwap` delta). It rejects third-party liquidity. The hook address is mined with CREATE2 for the required permission flags. |
 | `FeeEscrow` | Pull-based claimable balances per `(recipient, asset)`. |
@@ -159,14 +159,14 @@ All fees are denominated in the pair asset. Rates are the same on the curve and 
 
 ### 4.4 Lifecycle
 
-1. **Launch:** the creator pays the launch fee plus a first buy (non-zero, in ETH, USDG, or the pair synth through the router). The whole supply is minted to the factory; the curve allocation becomes a single-sided position across the curve range; the reserve stays in the factory, earmarked for the token.
+1. **Launch:** the creator pays the launch fee plus an optional first buy (in USDG or the pair synth through the router; zero opens the curve untouched). The whole supply is minted to the factory; the curve allocation becomes a single-sided position across the curve range; the reserve stays in the factory, earmarked for the token.
 2. **Trade on curve:** a normal v4 pool that aggregators can see from block 1.
 3. **Ready to graduate:** the current price is above the curve range, meaning the curve position is fully converted to the pair asset.
 4. **Migrate:** `migrate(token)` is permissionless, and a keeper calls it automatically. It succeeds only if the price is above the range at call time; otherwise it reverts and the coin stays on the curve. It removes the curve position, then adds the pair asset raised plus the reserve as a full-range position in **the same pool** at the current price. Reserve that doesn't fit at that price is burned. The position NFT is sent to `LaunchLocker`. It emits `Migrated`.
 
 ### 4.5 Errors & safety
 
-- Custom errors for each revert reason: `AssetNotAllowed`, `AssetStale`, `ConfigDisabled`, `FirstBuyRequired`, `TaxTooHigh`, `NotReadyToMigrate`, `SlippageExceeded`, `DeadlineExpired`, `Unauthorized`.
+- Custom errors for each revert reason: `AssetNotAllowed`, `AssetStale`, `ConfigDisabled`, `TaxTooHigh`, `NotReadyToMigrate`, `SlippageExceeded`, `DeadlineExpired`, `Unauthorized`.
 - Reentrancy guards on factory, router, vault, and escrow. Hooks never make external calls to untrusted tokens.
 - `launch` takes an `expectedConfigHash`. If the owner edits the config between the user's read and the launch, the launch reverts.
 

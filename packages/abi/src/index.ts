@@ -2920,11 +2920,6 @@ export const launchFactoryAbi = [
   },
   {
     "type": "error",
-    "name": "FirstBuyRequired",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "InsufficientBalance",
     "inputs": [
       {
