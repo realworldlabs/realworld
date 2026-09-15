@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {RwaFixture} from "../utils/RwaFixture.sol";
 
-/// @notice Random buys, price moves, harvests and redemptions against one asset.
+/// @notice Random buys, sells, price moves and rebalances against one asset.
 contract RwaHandler is Test {
     RwaFixtureHarness internal f;
     address[] internal actors;
@@ -22,23 +22,26 @@ contract RwaHandler is Test {
         f.doBuy(actors[actorSeed % actors.length], usdgIn);
     }
 
+    function sell(uint256 actorSeed, uint256 fraction) external {
+        fraction = bound(fraction, 1, 100);
+        f.doSell(actors[actorSeed % actors.length], fraction);
+    }
+
     function move(int256 tickDelta) external {
         tickDelta = bound(tickDelta, -500, 500);
         f.doMove(int24(tickDelta));
     }
 
-    function harvest() external {
-        f.doHarvest();
-    }
-
-    function redeem(uint256 actorSeed, uint256 fraction) external {
-        fraction = bound(fraction, 1, 100);
-        f.doRedeem(actors[actorSeed % actors.length], fraction);
+    function rebalance() external {
+        f.doRebalance();
     }
 }
 
 contract RwaFixtureHarness is RwaFixture {
     uint256 public assetId;
+    uint256 public usdgIn;
+    uint256 public usdgOut;
+    uint256 public ops;
 
     function usdgAt() internal pure override returns (address) {
         return address(uint160(0x1000000));
@@ -49,40 +52,38 @@ contract RwaFixtureHarness is RwaFixture {
         assetId = addAsset("sCSUS", 10e18);
     }
 
-    function doBuy(address who, uint256 usdgIn) external {
-        buySynth(assetId, who, usdgIn);
+    function doBuy(address who, uint256 amount) external {
+        uint256 before = usdgToken.balanceOf(who);
+        buySynth(assetId, who, amount);
+        usdgIn += amount - (usdgToken.balanceOf(who) - before);
+        ops++;
+    }
+
+    function doSell(address who, uint256 fraction) external {
+        uint256 amount = synthOf(assetId).balanceOf(who) * fraction / 100;
+        if (amount == 0) return;
+        usdgOut += sellSynth(assetId, who, amount);
+        ops++;
     }
 
     function doMove(int24 tickDelta) external {
         vm.warp(block.timestamp + 1 hours);
         movePrice(assetId, registry.getState(assetId).tick + tickDelta);
+        ops++;
     }
 
-    function doHarvest() external {
-        priceWall.harvest(assetId);
+    function doRebalance() external {
+        priceWall.rebalance(assetId);
+        ops++;
     }
 
-    function doRedeem(address who, uint256 fraction) external {
-        IERC20 synth = synthOf(assetId);
-        uint256 amount = synth.balanceOf(who) * fraction / 100;
-        if (amount == 0) return;
-        vm.startPrank(who);
-        synth.approve(address(vault), amount);
-        try vault.redeem(assetId, amount, 0, who) {} catch {}
-        vm.stopPrank();
-    }
-
-    function vaultUsdg() external view returns (uint256) {
-        return usdgToken.balanceOf(address(vault));
-    }
-
-    function potOf() external view returns (uint256) {
-        return vault.pot(assetId);
+    function wallUsdg() external view returns (uint256) {
+        (, uint256 u) = priceWall.wallBalances(assetId);
+        return u + usdgToken.balanceOf(address(priceWall));
     }
 
     function synthSupplyAccounted() external view returns (bool) {
-        IERC20 synth = synthOf(assetId);
-        return synth.totalSupply() == 1_000_000_000e18;
+        return synthOf(assetId).totalSupply() == 1_000_000_000e18;
     }
 }
 
@@ -97,9 +98,9 @@ contract RwaInvariantTest is Test {
         targetContract(address(handler));
     }
 
-    /// @dev The vault holds exactly what its pots say: nobody can be paid out of another asset's money.
-    function invariant_vaultBalanceMatchesPot() public view {
-        assertEq(f.vaultUsdg(), f.potOf());
+    /// @dev Every USDG paid in is still bidding in the wall until a seller takes it: nothing leaks, nothing is minted.
+    function invariant_wallHoldsExactlyWhatWasPaidIn() public view {
+        assertApproxEqAbs(f.wallUsdg(), f.usdgIn() - f.usdgOut(), 4 * (f.ops() + 1));
     }
 
     function invariant_supplyNeverChanges() public view {

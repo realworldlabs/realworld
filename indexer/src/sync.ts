@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { decodeEventLog, type Abi, type Address } from "viem";
 import {
   assetRegistryAbi,
@@ -8,7 +8,7 @@ import {
   launchHookAbi,
   launchTokenAbi,
   priceWallAbi,
-  redemptionVaultAbi,
+  wallHookAbi,
 } from "@rwa/abi";
 import { config, deployments } from "./config.ts";
 import type { Db } from "./db.ts";
@@ -22,7 +22,7 @@ const CURSOR = "robinhood";
 const abis = new Map<string, Abi>([
   [deployments.assetRegistry.toLowerCase(), assetRegistryAbi],
   [deployments.priceWall.toLowerCase(), priceWallAbi],
-  [deployments.redemptionVault.toLowerCase(), redemptionVaultAbi],
+  [deployments.wallHook.toLowerCase(), wallHookAbi],
   [deployments.launchFactory.toLowerCase(), launchFactoryAbi],
   [deployments.launchHook.toLowerCase(), launchHookAbi],
   [deployments.feeEscrow.toLowerCase(), feeEscrowAbi],
@@ -100,7 +100,23 @@ async function readCursor(db: Db): Promise<bigint> {
   return BigInt(row!.lastBlock + 1);
 }
 
+/** A redeployed registry means a new set of assets and coins: the old rows are dropped and the sync restarts. */
+export async function resetIfRedeployed(db: Db, log: (m: string, extra?: Record<string, unknown>) => void) {
+  const tag = `registry:${deployments.assetRegistry.toLowerCase()}`;
+  const rows = await db.select().from(s.syncState);
+  const previous = rows.find((r) => r.key.startsWith("registry:"));
+  if (previous?.key === tag) return;
+  if (previous) {
+    log("registry changed; clearing indexed data", { from: previous.key, to: tag });
+    for (const t of ["asset", "asset_price", "coin", "trade", "candle", "holder", "fee_balance", "buyback", "redemption", "sync_state"]) {
+      await db.execute(sql.raw(`delete from ${t}`));
+    }
+  }
+  await db.insert(s.syncState).values({ key: tag, lastBlock: 0 }).onConflictDoNothing();
+}
+
 export async function runSync(db: Db, log: (m: string, extra?: Record<string, unknown>) => void) {
+  await resetIfRedeployed(db, log);
   await loadKnownTokens(db);
   let next = await readCursor(db);
   status.lastBlock = Number(next - 1n);

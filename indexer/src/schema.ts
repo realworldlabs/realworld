@@ -27,7 +27,10 @@ export const asset = pgTable("asset", {
   priceUsd: doublePrecision("price_usd").notNull(),
   lastUpdate: integer("last_update").notNull(),
   paused: boolean("paused").notNull(),
+  /** USDG bidding in the wall: what holders can sell back into. */
   pot: big("pot").notNull(),
+  /** Synth still on offer in the wall; supply minus this is in circulation. */
+  wallSynth: big("wall_synth").notNull(),
   launches: integer("launches").notNull(),
 });
 
@@ -163,6 +166,7 @@ export const redemption = pgTable("redemption", {
 export const DDL = [
   sql`create table if not exists sync_state (key text primary key, last_block integer not null)`,
   sql`create table if not exists asset (asset_id integer primary key, token text not null, symbol text not null, name text not null, category text not null, metadata_uri text not null, pool_id text not null, synth_is_token0 boolean not null, tick integer not null, price_usd double precision not null, last_update integer not null, paused boolean not null, pot numeric(78,0) not null, launches integer not null)`,
+  sql`alter table asset add column if not exists wall_synth numeric(78,0) not null default 0`,
   sql`create table if not exists asset_price (id text primary key, asset_id integer not null, tick integer not null, price_usd double precision not null, sources_hash text not null, timestamp integer not null, tx_hash text not null)`,
   sql`create index if not exists asset_price_asset_idx on asset_price (asset_id, timestamp)`,
   sql`create table if not exists coin (token text primary key, name text not null, symbol text not null, logo text not null, description text not null, creator text not null, fee_recipient text not null, pair text not null, asset_id integer, pool_id text not null, token_is_token0 boolean not null, creator_tax_bps integer not null, buyback_bps integer not null, buyback_enabled boolean not null, curve_end_sqrt_price_x96 numeric(78,0) not null, curve_start_sqrt_price_x96 numeric(78,0) not null, created_at integer not null, graduated boolean not null, graduated_at integer, sqrt_price_x96 numeric(78,0) not null, price_in_pair double precision not null, price_usd double precision not null, market_cap_usd double precision not null, curve_progress double precision not null, volume_usd double precision not null, trades integer not null, last_trade_at integer not null)`,

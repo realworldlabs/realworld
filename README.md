@@ -8,7 +8,7 @@ Design: [`docs/superpowers/specs/2026-09-14-rwa-launchpad-design.md`](docs/super
 
 | Path | What | Stack |
 |---|---|---|
-| `contracts/` | Synthetic RWA stack (registry, price walls, redemption vault) and launchpad (factory, fee hook, escrow, buybacks, locker, router) | Solidity 0.8.26, Foundry, Uniswap v4 |
+| `contracts/` | Synthetic RWA stack (registry, two-sided price walls) and launchpad (factory, fee hook, escrow, buybacks, locker, router) | Solidity 0.8.26, Foundry, Uniswap v4 |
 | `keeper/` | Moves price walls from agreeing real-world sources; graduates sold-out curves; runs buybacks | TypeScript, viem |
 | `indexer/` | Indexes assets, launches, trades, candles, holders and fees; REST API | viem + drizzle (Postgres/PGlite) + Hono |
 | `web/` | The trading app | Next.js 16, wagmi, RainbowKit, lightweight-charts |
@@ -20,7 +20,7 @@ Design: [`docs/superpowers/specs/2026-09-14-rwa-launchpad-design.md`](docs/super
  real-world sources ──> keeper ──movePrice──> PriceWall (one-tick sell wall per synth) <──buy synth── USDG
                             │                        │ swept USDG
                             │                        v
-                            │                 RedemptionVault (per-asset pot, pro-rata haircut) <──redeem── synth holders
+                            │                 (USDG paid in stays in the wall as the bid; anyone can sell synth back)
                             │
                             ├─migrate────> LaunchFactory ──> v4 pool (curve) ──graduate──> LaunchLocker (add-only)
                             └─buyback────> BuybackVault         │ every swap

@@ -27,18 +27,14 @@ export default function DocsPage() {
           readings it used.
         </p>
         <p>
-          Underlyings can only be <strong>bought</strong> from the wall. To sell one, redeem it with its vault, which pays USDG at
-          the wall price from the dollars that underlying&apos;s own wall collected, minus 0.3%. If the price has risen faster than
-          the pot, <strong>every holder takes the same pro-rata haircut</strong>. One underlying can never drain another.
-        </p>
-        <p>
-          Because of this, coins paired with an underlying are <strong>sold here</strong>: the order ticket routes coin → underlying →
-          vault in one transaction. External trading terminals cannot route an underlying back to USDG and will label such a
-          coin as unsellable or &ldquo;100% sell tax&rdquo;. That is the wall doing its job, not a tax.
+          The wall has two sides. Synth is offered at the wall price, and every USDG ever paid for it <strong>stays in the wall</strong>,
+          bidding one tick below. So an underlying can be sold back to USDG by anyone, through any router, as long as the wall still
+          holds the dollars that bought in. The keeper moves both sides together. If the price has risen faster than the money in
+          the wall, the last sellers wait until someone buys in; the wall never pays with another underlying&apos;s money.
         </p>
         <p>
           If the keeper misses an asset&apos;s heartbeat (45 days for macro, 48 hours for collectibles), new launches against it are
-          blocked. Trading and redemption never stop. A guardian can pause price moves and launches, but not trading.
+          blocked. Trading never stops. A guardian can pause price moves and launches, but not trading.
         </p>
 
         <h2>Launching</h2>
@@ -70,8 +66,8 @@ export default function DocsPage() {
         <p>
           These are memecoins and most go to zero. A coin priced in an underlying carries that underlying&apos;s risk too: if the
           underlying falls, your coin falls with it. Underlyings depend on a single keeper operator, bounded by on-chain limits,
-          and on redemption pots that can run short. Collectible prices can be manipulated at the source. Nothing here is
-          investment advice.
+          and on wall backing that can run short after a price rise. Collectible prices can be manipulated at the source. Nothing
+          here is investment advice.
         </p>
       </div>
     </div>

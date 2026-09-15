@@ -22,7 +22,7 @@ export function TradeTicket({ coin }: { coin: CoinDetail }) {
   const [side, setSide] = useState<Side>("buy");
   const synthPair = coin.assetId !== null;
   const pairSymbol = coin.asset?.symbol ?? "USDG";
-  // "usdg" routes through the synth wall / vault; "pair" trades the pair asset directly.
+  // "usdg" routes through the synth's wall in both directions; "pair" trades the pair asset directly.
   const [asset, setAsset] = useState<"usdg" | "pair">("usdg");
   const [amount, setAmount] = useState("");
   const [slippageBps, setSlippageBps] = useState(300);
@@ -265,7 +265,7 @@ export function TradeTicket({ coin }: { coin: CoinDetail }) {
             {asset === "usdg"
               ? side === "buy"
                 ? `USDG buys ${pairSymbol} at its wall, then ${coin.symbol}, in one transaction.`
-                : `Proceeds in ${pairSymbol} are redeemed for USDG from its vault (0.3% fee, pro-rata haircut if the pot is short). Sell here: external terminals cannot route ${pairSymbol} back to USDG.`
+                : `Proceeds in ${pairSymbol} are sold on into its wall for USDG in the same transaction.`
               : `Trades directly in ${pairSymbol}.`}
           </p>
         )}

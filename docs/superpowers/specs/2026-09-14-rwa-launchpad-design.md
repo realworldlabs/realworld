@@ -40,6 +40,8 @@ Admin model: one **owner multisig** and one **guardian multisig**. The guardian 
 
 ### 3.1 Model
 
+> **Revised 2026-09-15:** the RedemptionVault was removed. The wall is now two-sided: USDG paid for a synth stays in the wall as a bid one tick below the offer, so anyone can sell synth back to USDG through any router (third-party terminals no longer see a "100% sell tax"). Backing is first-come when a price rise leaves the wall short. Sections below that mention the vault, pots or the pro-rata haircut describe the original design.
+
 Each asset is an ERC-20 whose full supply is minted once and placed into a Uniswap v4 synth/USDG position exactly **one tick wide**. A one-tick position is a flat wall: buyers get the synth at a single price. A keeper moves the wall when the real-world price changes. Sellers redeem synth for USDG from that asset's own pot. The protocol never owes more than a pot holds, and one asset can never drain another.
 
 ### 3.2 Contracts

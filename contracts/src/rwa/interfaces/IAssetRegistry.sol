@@ -34,7 +34,6 @@ interface IAssetRegistry {
     function keeper() external view returns (address);
     function treasury() external view returns (address);
     function priceWall() external view returns (address);
-    function vault() external view returns (address);
 
     function assetCount() external view returns (uint256);
     function getConfig(uint256 assetId) external view returns (AssetConfig memory);

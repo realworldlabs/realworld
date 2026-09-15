@@ -86,19 +86,38 @@ abstract contract LaunchRouterTestBase is LaunchFixture {
         assertEq(IERC20(synth).balanceOf(alice), 0);
     }
 
-    function test_sellForUsdg_redeemsThroughVault() public {
+    function test_sellForUsdg_throughWall() public {
         usdgToken.mint(alice, 500e6);
         vm.startPrank(alice);
         usdgToken.approve(address(router), 500e6);
         uint256 bought = router.buy(token, address(usdgToken), 500e6, 0, alice, block.timestamp);
-        (uint256 quotedUsdg,) = router.quoteSell(token, bought, address(usdgToken));
+        (uint256 quotedUsdg, uint256 quotedSynth) = router.quoteSell(token, bought, address(usdgToken));
         IERC20(token).approve(address(router), bought);
         uint256 out = router.sell(token, bought, address(usdgToken), quotedUsdg, alice, block.timestamp);
         vm.stopPrank();
         assertEq(out, quotedUsdg);
-        // two 2% trade fees and a 0.3% redemption fee
-        assertApproxEqRel(out, 478e6, 1e16);
+        assertGt(quotedSynth, 0);
+        // two 2% trade fees, then the wall's one-tick spread
+        assertApproxEqRel(out, 480e6, 1e16);
         assertEq(usdgToken.balanceOf(alice), out);
+        assertEq(IERC20(synth).balanceOf(alice), 0);
+    }
+
+    function test_swapWall_roundTrip() public {
+        usdgToken.mint(alice, 1_000e6);
+        vm.startPrank(alice);
+        usdgToken.approve(address(router), 1_000e6);
+        uint256 quotedSynth = router.quoteWall(synth, false, 1_000e6);
+        uint256 synthOut = router.swapWall(synth, false, 1_000e6, quotedSynth, alice, block.timestamp);
+        assertEq(synthOut, quotedSynth);
+        assertApproxEqRel(synthOut, uint256(1_000e18) / 420, 3e14);
+
+        IERC20(synth).approve(address(router), synthOut);
+        uint256 quotedUsdg = router.quoteWall(synth, true, synthOut);
+        uint256 usdgOut = router.swapWall(synth, true, synthOut, quotedUsdg, alice, block.timestamp);
+        vm.stopPrank();
+        assertEq(usdgOut, quotedUsdg);
+        assertApproxEqRel(usdgOut, 1_000e6, 5e14);
     }
 
     function test_sellForPair() public {

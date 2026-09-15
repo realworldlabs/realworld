@@ -15,7 +15,10 @@ export interface Asset {
   priceUsd: number;
   lastUpdate: number;
   paused: boolean;
+  /** USDG bidding in the wall (6 decimals): what holders can sell back into. */
   pot: string;
+  /** Synth still on offer in the wall (18 decimals). */
+  wallSynth: string;
   launches: number;
   /** Fraction, e.g. 0.031 for +3.1%; null when there is no baseline yet. */
   change24h: number | null;

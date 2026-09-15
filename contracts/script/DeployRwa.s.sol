@@ -27,6 +27,5 @@ contract DeployRwa is StackDeployer {
         console2.log("AssetRegistry  ", address(s.registry));
         console2.log("WallHook       ", address(s.wallHook));
         console2.log("PriceWall      ", address(s.priceWall));
-        console2.log("RedemptionVault", address(s.vault));
     }
 }

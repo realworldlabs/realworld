@@ -6,7 +6,7 @@ It reads contract addresses and the start block from a deployments JSON (`DEPLOY
 
 It indexes:
 
-- **Assets:** `AssetRegistry` and `PriceWall` for asset metadata, wall ticks, USD prices and keeper audit hashes; `RedemptionVault` for pots and redemptions.
+- **Assets:** `AssetRegistry` and `PriceWall` for asset metadata, wall ticks, USD prices and keeper audit hashes; `WallHook.WallSwap` and `PriceWall.WallReset` to refresh what each wall holds.
 - **Launches:** `LaunchFactory` for launches, graduations and creator settings. The creator's first buy comes from the `Launched` event, because its swap is emitted before the pool is known.
 - **Trades:** `LaunchHook.Traded` for trades, 1m/5m/1h/1d candles, volume, market cap and curve progress.
 - **Holders:** `Transfer` on every launch token (addresses discovered from `Launched`) for balances. Holder counts exclude protocol contracts.
@@ -50,4 +50,4 @@ DATABASE_URL=postgres://... pnpm start
 
 Addresses in responses are lowercase.
 
-`asset.pot` counts USDG already swept into the vault. USDG still sitting in a wall position shows up after the next harvest or price move; read `RedemptionVault.quoteRedeem` for the live redemption ratio.
+`asset.pot` is the USDG bidding in the wall and `asset.wallSynth` the synth still on offer, both re-read from `PriceWall.wallBalances` after every wall swap or reset. A redeployed registry (different `assetRegistry` in the deployments file) clears all indexed rows and restarts the sync.

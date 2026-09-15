@@ -9,7 +9,6 @@ import {AssetRegistry} from "../../src/rwa/AssetRegistry.sol";
 import {IAssetRegistry} from "../../src/rwa/interfaces/IAssetRegistry.sol";
 import {WallHook} from "../../src/rwa/WallHook.sol";
 import {PriceWall} from "../../src/rwa/PriceWall.sol";
-import {RedemptionVault} from "../../src/rwa/RedemptionVault.sol";
 import {LaunchHook} from "../../src/launchpad/LaunchHook.sol";
 import {LaunchFactory} from "../../src/launchpad/LaunchFactory.sol";
 import {LaunchTokenDeployer} from "../../src/launchpad/LaunchTokenDeployer.sol";
@@ -29,7 +28,6 @@ abstract contract StackDeployer is Script {
         AssetRegistry registry;
         WallHook wallHook;
         PriceWall priceWall;
-        RedemptionVault vault;
     }
 
     struct LaunchStack {
@@ -48,7 +46,7 @@ abstract contract StackDeployer is Script {
     {
         s.registry = new AssetRegistry(deployer, guardian, keeper, treasury);
 
-        uint160 flags = uint160(Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.BEFORE_SWAP_FLAG);
+        uint160 flags = uint160(Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.AFTER_SWAP_FLAG);
         (address hookAddr, bytes32 salt) = HookMiner.find(
             RobinhoodChain.CREATE2_DEPLOYER, flags, type(WallHook).creationCode, abi.encode(manager, s.registry)
         );
@@ -56,8 +54,7 @@ abstract contract StackDeployer is Script {
         require(address(s.wallHook) == hookAddr, "wall hook address mismatch");
 
         s.priceWall = new PriceWall(manager, s.registry, IHooks(address(s.wallHook)), usdg);
-        s.vault = new RedemptionVault(s.registry, usdg);
-        s.registry.wire(address(s.priceWall), address(s.vault));
+        s.registry.wire(address(s.priceWall));
     }
 
     function _deployLaunchpad(

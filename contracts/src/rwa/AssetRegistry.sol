@@ -12,13 +12,12 @@ contract AssetRegistry is IAssetRegistry, Ownable2Step {
     address public keeper;
     address public treasury;
     address public priceWall;
-    address public vault;
 
     AssetConfig[] private _configs;
     AssetState[] private _states;
     mapping(address token => uint256 idPlusOne) private _idPlusOne;
 
-    event Wired(address priceWall, address vault);
+    event Wired(address priceWall);
     event AssetAdded(uint256 indexed assetId, address indexed token, string symbol, int24 startTick);
     event PriceRecorded(uint256 indexed assetId, int24 oldTick, int24 newTick);
     event PausedSet(uint256 indexed assetId, bool paused);
@@ -52,12 +51,11 @@ contract AssetRegistry is IAssetRegistry, Ownable2Step {
 
     // ---------- wiring & roles ----------
 
-    function wire(address priceWall_, address vault_) external onlyOwner {
+    function wire(address priceWall_) external onlyOwner {
         if (priceWall != address(0)) revert AlreadyWired();
-        if (priceWall_ == address(0) || vault_ == address(0)) revert ZeroAddress();
+        if (priceWall_ == address(0)) revert ZeroAddress();
         priceWall = priceWall_;
-        vault = vault_;
-        emit Wired(priceWall_, vault_);
+        emit Wired(priceWall_);
     }
 
     function owner() public view override(IAssetRegistry, Ownable) returns (address) {

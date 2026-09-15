@@ -64,9 +64,11 @@ export const handlers: Record<string, Handler> = {
         lastUpdate: await blockTimestamp(e.blockNumber),
         paused: false,
         pot: 0n,
+        wallSynth: config.wallSupply,
         launches: 0,
       })
       .onConflictDoNothing();
+    await refreshWall(db, Number(assetId));
     // The opening price starts the history so change and sparkline have a baseline before the first keeper move.
     await db
       .insert(s.assetPrice)
@@ -114,24 +116,13 @@ export const handlers: Record<string, Handler> = {
       .onConflictDoNothing();
   },
 
-  async PotCredited(db, e: Ev<{ assetId: bigint; amount: bigint }>) {
-    await db
-      .update(s.asset)
-      .set({ pot: sql`${s.asset.pot} + ${e.args.amount.toString()}::numeric` })
-      .where(eq(s.asset.assetId, Number(e.args.assetId)));
+  /** Anyone trading against a wall changes what it holds; the balances are re-read rather than tracked by delta. */
+  async WallSwap(db, e: Ev<{ assetId: bigint; sender: Address; amount0: bigint; amount1: bigint; sqrtPriceX96: bigint }>) {
+    await refreshWall(db, Number(e.args.assetId));
   },
 
-  async Redeemed(db, e: Ev<{ assetId: bigint; from: Address; to: Address; synthIn: bigint; usdgOut: bigint; fee: bigint }>) {
-    const id = Number(e.args.assetId);
-    const { usdgOut, fee, synthIn } = e.args;
-    await db
-      .update(s.asset)
-      .set({ pot: sql`${s.asset.pot} - ${(usdgOut + fee).toString()}::numeric` })
-      .where(eq(s.asset.assetId, id));
-    await db
-      .insert(s.redemption)
-      .values({ id: eventId(e), assetId: id, account: lc(e.args.from), synthIn, usdgOut, fee, timestamp: await blockTimestamp(e.blockNumber) })
-      .onConflictDoNothing();
+  async WallReset(db, e: Ev<{ assetId: bigint; tick: number; synthLiquidity: bigint; usdgLiquidity: bigint }>) {
+    await refreshWall(db, Number(e.args.assetId));
   },
 
   async Launched(
@@ -352,6 +343,12 @@ export const handlers: Record<string, Handler> = {
       .onConflictDoNothing();
   },
 };
+
+/** Reads the wall at the latest block: a swap and its balance read can be a few blocks apart, which is fine for display. */
+async function refreshWall(db: Db, assetId: number) {
+  const [synthAmount, usdgAmount] = await client.readContract({ ...priceWall, functionName: "wallBalances", args: [BigInt(assetId)] });
+  await db.update(s.asset).set({ pot: usdgAmount, wallSynth: synthAmount }).where(eq(s.asset.assetId, assetId));
+}
 
 async function bumpBalance(db: Db, token: Address, account: Address, delta: bigint) {
   await db

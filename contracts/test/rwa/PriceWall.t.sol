@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {PoolSwapTest} from "@uniswap/v4-core/src/test/PoolSwapTest.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
-import {SwapParams, ModifyLiquidityParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
+import {ModifyLiquidityParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
 import {AssetRegistry} from "../../src/rwa/AssetRegistry.sol";
 import {PriceWall} from "../../src/rwa/PriceWall.sol";
 import {RwaFixture} from "../utils/RwaFixture.sol";
@@ -30,24 +29,41 @@ abstract contract PriceWallTestBase is RwaFixture {
         assertApproxEqAbs(usdgInWall, 1_000e6, 2);
     }
 
-    function test_sellSynth_reverts() public {
-        uint256 out = buySynth(assetId, alice, 1_000e6);
-        PoolKey memory key = priceWall.poolKeyOf(assetId);
-        bool synthIs0 = priceWall.synthIsToken0(assetId);
+    /// @dev The USDG that bought in bids one tick below the offer, so a sale gets the wall price minus ~1 bp.
+    function test_sellSynth_returnsUsdgAtWallPrice() public {
+        uint256 bought = buySynth(assetId, alice, 1_000e6);
+        uint256 out = sellSynth(assetId, alice, bought);
+        assertApproxEqRel(out, 1_000e6, 5e14);
+        assertEq(synthOf(assetId).balanceOf(alice), 0);
+        (uint256 synthInWall, uint256 usdgInWall) = priceWall.wallBalances(assetId);
+        assertLe(usdgInWall, 2);
+        assertApproxEqRel(synthInWall, 1_000_000_000e18, 1e12);
+    }
+
+    function test_sellSynth_anyoneCanSellWhatTheyHold() public {
+        uint256 bought = buySynth(assetId, alice, 500e6);
         vm.startPrank(alice);
-        synthOf(assetId).approve(address(swapRouter), out);
-        vm.expectRevert();
-        swapRouter.swap(
-            key,
-            SwapParams({
-                zeroForOne: synthIs0,
-                amountSpecified: -int256(out),
-                sqrtPriceLimitX96: synthIs0 ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
-            }),
-            PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),
-            ""
-        );
+        synthOf(assetId).transfer(bob, bought);
         vm.stopPrank();
+        uint256 out = sellSynth(assetId, bob, bought);
+        assertApproxEqRel(out, 500e6, 5e14);
+    }
+
+    function test_sellSynth_stopsWhenWallUsdgRunsOut() public {
+        uint256 aliceSynth = buySynth(assetId, alice, 1_000e6);
+        vm.warp(block.timestamp + 1 hours);
+        movePrice(assetId, tickFor(assetId, 10.4e18)); // worth $1,040 now, only $1,000 bid
+
+        uint256 out = sellSynth(assetId, alice, aliceSynth);
+        assertApproxEqAbs(out, 1_000e6, 2);
+        // The unsold remainder stays with her and can be sold once someone else buys in.
+        uint256 left = synthOf(assetId).balanceOf(alice);
+        assertGt(left, 3e18);
+        assertLt(left, 4.5e18);
+
+        buySynth(assetId, bob, 100e6);
+        uint256 out2 = sellSynth(assetId, alice, left);
+        assertApproxEqRel(out2, left * 104 / 10 / 1e12, 1e15); // $10.40 per synth, 6-dec USDG
     }
 
     function test_thirdPartyLiquidity_reverts() public {
@@ -56,17 +72,20 @@ abstract contract PriceWallTestBase is RwaFixture {
         modifyLiquidityRouter.modifyLiquidity(key, ModifyLiquidityParams(-100, 100, 1e18, 0), "");
     }
 
-    function test_movePrice_up_sweepsUsdgAndReprices() public {
+    function test_movePrice_up_keepsUsdgInWallAndReprices() public {
         buySynth(assetId, alice, 1_000e6);
         vm.warp(block.timestamp + 1 hours);
         movePrice(assetId, tickFor(assetId, 10.4e18));
 
-        assertApproxEqAbs(vault.pot(assetId), 1_000e6, 2);
-        assertApproxEqAbs(usdgToken.balanceOf(address(vault)), 1_000e6, 2);
+        (, uint256 usdgInWall) = priceWall.wallBalances(assetId);
+        assertApproxEqAbs(usdgInWall, 1_000e6, 4);
         assertApproxEqRel(priceWall.priceX18(assetId), 10.4e18, 2e14);
 
         uint256 out = buySynth(assetId, bob, 1_040e6);
         assertApproxEqRel(out, 100e18, 3e14);
+        // Sales now fill at the new price.
+        uint256 usdgOut = sellSynth(assetId, bob, 50e18);
+        assertApproxEqRel(usdgOut, 520e6, 5e14);
     }
 
     function test_movePrice_down_reprices() public {
@@ -76,6 +95,11 @@ abstract contract PriceWallTestBase is RwaFixture {
         assertApproxEqRel(priceWall.priceX18(assetId), 9.6e18, 2e14);
         uint256 out = buySynth(assetId, bob, 960e6);
         assertApproxEqRel(out, 100e18, 3e14);
+        // Alice's 100 synth now fetch $960; the surplus $40 keeps bidding.
+        uint256 usdgOut = sellSynth(assetId, alice, synthOf(assetId).balanceOf(alice));
+        assertApproxEqRel(usdgOut, 960e6, 5e14);
+        (, uint256 usdgInWall) = priceWall.wallBalances(assetId);
+        assertApproxEqRel(usdgInWall, 1_000e6, 1e15);
     }
 
     function test_movePrice_revertsForNonKeeper() public {
@@ -110,14 +134,15 @@ abstract contract PriceWallTestBase is RwaFixture {
         priceWall.movePrice(assetId, t, bytes32(0));
     }
 
-    function test_harvest_sweepsWithoutMovingPrice() public {
+    function test_rebalance_keepsPriceAndBalances() public {
         buySynth(assetId, alice, 500e6);
         uint256 priceBefore = priceWall.priceX18(assetId);
-        priceWall.harvest(assetId);
-        assertApproxEqAbs(vault.pot(assetId), 500e6, 2);
+        (uint256 synthBefore, uint256 usdgBefore) = priceWall.wallBalances(assetId);
+        priceWall.rebalance(assetId);
         assertEq(priceWall.priceX18(assetId), priceBefore);
-        (, uint256 usdgInWall) = priceWall.wallBalances(assetId);
-        assertEq(usdgInWall, 0);
+        (uint256 synthAfter, uint256 usdgAfter) = priceWall.wallBalances(assetId);
+        assertApproxEqAbs(usdgAfter, usdgBefore, 2);
+        assertApproxEqRel(synthAfter, synthBefore, 1e12);
     }
 }
 

@@ -5,7 +5,7 @@ import path from "node:path";
 
 const OUT = path.resolve("contracts/out");
 const CONTRACTS = [
-  "AssetRegistry", "PriceWall", "RedemptionVault", "SynthToken",
+  "AssetRegistry", "PriceWall", "WallHook", "SynthToken",
   "LaunchFactory", "LaunchHook", "LaunchRouter", "LaunchToken", "FeeEscrow", "BuybackVault", "LaunchLocker",
 ];
 

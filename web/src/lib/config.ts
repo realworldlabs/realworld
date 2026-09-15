@@ -6,7 +6,7 @@ export interface Deployments {
   poolManager: Address;
   assetRegistry: Address;
   priceWall: Address;
-  redemptionVault: Address;
+  wallHook: Address;
   launchFactory: Address;
   launchRouter: Address;
   feeEscrow: Address;

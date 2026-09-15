@@ -14,7 +14,6 @@ import {AssetRegistry} from "../../src/rwa/AssetRegistry.sol";
 import {IAssetRegistry} from "../../src/rwa/interfaces/IAssetRegistry.sol";
 import {WallHook} from "../../src/rwa/WallHook.sol";
 import {PriceWall} from "../../src/rwa/PriceWall.sol";
-import {RedemptionVault} from "../../src/rwa/RedemptionVault.sol";
 import {PriceMath} from "../../src/libraries/PriceMath.sol";
 import {RobinhoodChain} from "../../script/RobinhoodChain.sol";
 
@@ -26,7 +25,6 @@ contract RwaForkTest is Test {
 
     AssetRegistry internal registry;
     PriceWall internal priceWall;
-    RedemptionVault internal vault;
     PoolSwapTest internal swapRouter;
 
     address internal owner = makeAddr("owner");
@@ -38,18 +36,17 @@ contract RwaForkTest is Test {
 
         registry = new AssetRegistry(owner, makeAddr("guardian"), keeper, makeAddr("treasury"));
         address hookAddr = address(
-            uint160(Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.BEFORE_SWAP_FLAG)
+            uint160(Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.AFTER_SWAP_FLAG)
                 | uint160(0x5555 << 144)
         );
         deployCodeTo("WallHook.sol:WallHook", abi.encode(manager, registry), hookAddr);
         priceWall = new PriceWall(manager, registry, IHooks(hookAddr), address(usdg));
-        vault = new RedemptionVault(registry, address(usdg));
         vm.prank(owner);
-        registry.wire(address(priceWall), address(vault));
+        registry.wire(address(priceWall));
         swapRouter = new PoolSwapTest(manager);
     }
 
-    function test_fork_buyMoveRedeem() public {
+    function test_fork_buyMoveSell() public {
         IAssetRegistry.AssetConfig memory c;
         c.name = "Case-Shiller US National";
         c.symbol = "sCSUS";
@@ -85,12 +82,19 @@ contract RwaForkTest is Test {
         vm.warp(block.timestamp + 1 hours);
         vm.prank(keeper);
         priceWall.movePrice(id, PriceMath.tickAtPrice(320e18, synthIs0, 1e30), keccak256("fork"));
-        assertApproxEqAbs(vault.pot(id), 3_300e6, 2);
+        (, uint256 usdgInWall) = priceWall.wallBalances(id);
+        assertApproxEqAbs(usdgInWall, 3_300e6, 4);
 
+        // Sell everything back through a plain v4 router, as any terminal would.
         vm.startPrank(alice);
-        synth.approve(address(vault), type(uint256).max);
-        uint256 out = vault.redeem(id, synth.balanceOf(alice), 0, alice);
+        synth.approve(address(swapRouter), type(uint256).max);
+        swapRouter.swap(
+            key,
+            SwapParams(synthIs0, -int256(synth.balanceOf(alice)), synthIs0 ? TickMath.MIN_SQRT_PRICE + 1 : TickMath.MAX_SQRT_PRICE - 1),
+            PoolSwapTest.TestSettings(false, false),
+            ""
+        );
         vm.stopPrank();
-        assertApproxEqRel(out, 3_200e6 * 997 / 1000, 1e15);
+        assertApproxEqRel(usdg.balanceOf(alice), 3_200e6, 1e15);
     }
 }

@@ -9,7 +9,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AssetRegistry} from "../../src/rwa/AssetRegistry.sol";
 import {IAssetRegistry} from "../../src/rwa/interfaces/IAssetRegistry.sol";
 import {PriceWall} from "../../src/rwa/PriceWall.sol";
-import {RedemptionVault} from "../../src/rwa/RedemptionVault.sol";
 import {PriceMath} from "../../src/libraries/PriceMath.sol";
 import {LaunchHook} from "../../src/launchpad/LaunchHook.sol";
 import {LaunchFactory} from "../../src/launchpad/LaunchFactory.sol";
@@ -40,14 +39,13 @@ contract LaunchpadForkTest is Test {
 
         registry = new AssetRegistry(owner, makeAddr("guardian"), keeper, treasury);
         address wallHook = address(
-            uint160(Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.BEFORE_SWAP_FLAG)
+            uint160(Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.AFTER_SWAP_FLAG)
                 | uint160(0x5555 << 144)
         );
         deployCodeTo("WallHook.sol:WallHook", abi.encode(manager, registry), wallHook);
         PriceWall priceWall = new PriceWall(manager, registry, IHooks(wallHook), address(usdg));
-        RedemptionVault vault = new RedemptionVault(registry, address(usdg));
         vm.prank(owner);
-        registry.wire(address(priceWall), address(vault));
+        registry.wire(address(priceWall));
 
         address hookAddr = address(
             uint160(
@@ -124,7 +122,7 @@ contract LaunchpadForkTest is Test {
         factory.migrate(token);
         assertTrue(factory.isGraduated(token));
 
-        // Post-graduation sell straight back to USDG via the vault.
+        // Post-graduation sell straight back to USDG through the synth's wall.
         vm.startPrank(trader);
         IERC20(token).approve(address(router), bought / 10);
         uint256 usdgOut = router.sell(token, bought / 10, address(usdg), 0, trader, block.timestamp);

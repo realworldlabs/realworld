@@ -192,7 +192,7 @@ export default function LaunchPage() {
                   <span className="mono" style={{ fontSize: 14, color: "var(--fg)" }}>
                     USDG
                   </span>
-                  <span className="hint">Plain dollars · tradable anywhere</span>
+                  <span className="hint">Plain dollars · no underlying</span>
                   <span className="mono amber" style={{ fontSize: 12 }}>
                     $1.00
                   </span>
@@ -200,7 +200,7 @@ export default function LaunchPage() {
               </div>
               {selected && (
                 <p className="hint" style={{ margin: "10px 0 0" }}>
-                  Coins paired with {selected.symbol} are bought and sold on RealWorld. External terminals cannot route {selected.symbol} back to USDG.
+                  Your coin will be priced in {selected.symbol}, so it moves with {selected.name} as well as with its own demand.
                 </p>
               )}
             </div>

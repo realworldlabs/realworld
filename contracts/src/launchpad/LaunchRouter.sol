@@ -18,11 +18,11 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import {IAssetRegistry} from "../rwa/interfaces/IAssetRegistry.sol";
 import {IPriceWall} from "../rwa/interfaces/IPriceWall.sol";
-import {IRedemptionVault} from "../rwa/interfaces/IRedemptionVault.sol";
 import {LaunchFactory} from "./LaunchFactory.sol";
 
-/// @notice One-transaction trading for launch coins. Pays in the coin's pair or in USDG
-///         (routed through the synth's price wall), and sells back to the pair or to USDG (via the vault).
+/// @notice One-transaction trading for launch coins. Pays in the coin's pair or in USDG and sells back to the
+///         pair or to USDG, routing through the synth's price wall in both directions. Also trades synths
+///         against their wall directly.
 contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
     using SafeERC20 for IERC20;
 
@@ -75,28 +75,36 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
         _refund(payWith, msg.sender);
     }
 
-    /// @param receiveAsset The coin's pair asset, or USDG when the pair is a synth (redeemed through the vault).
+    /// @param receiveAsset The coin's pair asset, or USDG when the pair is a synth (sold on through its wall).
+    ///        If the wall's USDG runs out mid-sale, the unsold synth is delivered to `recipient` instead.
     function sell(address token, uint256 amountIn, address receiveAsset, uint256 minOut, address recipient, uint256 deadline)
         external
         nonReentrant
         checkDeadline(deadline)
         returns (uint256 amountOut)
     {
-        address pair = _pairOf(token);
+        Hop[] memory hops = _sellHops(token, receiveAsset);
         IERC20(token).safeTransferFrom(msg.sender, address(this), amountIn);
-        Hop[] memory hops = new Hop[](1);
-        hops[0] = _hop(factory.poolKeyOf(token), token);
-
-        if (receiveAsset == pair) {
-            (amountOut,) = _execute(hops, amountIn, Currency.wrap(token), Currency.wrap(pair), recipient, false);
-        } else if (receiveAsset == usdg) {
-            (uint256 synthOut,) = _execute(hops, amountIn, Currency.wrap(token), Currency.wrap(pair), address(this), false);
-            amountOut = _redeem(pair, synthOut, recipient);
-        } else {
-            revert UnsupportedPayment();
-        }
+        (amountOut,) = _execute(hops, amountIn, Currency.wrap(token), Currency.wrap(receiveAsset), recipient, false);
         if (amountOut < minOut) revert SlippageExceeded();
         _refund(token, msg.sender);
+    }
+
+    /// @notice Trades USDG for a synth at its wall, or a synth back to USDG.
+    function swapWall(address synth, bool sellSynth, uint256 amountIn, uint256 minOut, address recipient, uint256 deadline)
+        external
+        nonReentrant
+        checkDeadline(deadline)
+        returns (uint256 amountOut)
+    {
+        address input = sellSynth ? synth : usdg;
+        address output = sellSynth ? usdg : synth;
+        Hop[] memory hops = new Hop[](1);
+        hops[0] = sellSynth ? _hop(_wallKey(synth), synth) : _hopInto(_wallKey(synth), synth);
+        IERC20(input).safeTransferFrom(msg.sender, address(this), amountIn);
+        (amountOut,) = _execute(hops, amountIn, Currency.wrap(input), Currency.wrap(output), recipient, false);
+        if (amountOut < minOut) revert SlippageExceeded();
+        _refund(input, msg.sender);
     }
 
     /// @notice Launch through the router so the first buy can be paid in USDG. `p.creator` must be the caller.
@@ -142,22 +150,28 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
     }
 
     /// @return amountOut Proceeds in `receiveAsset`.
-    /// @return pairAmount Proceeds in the pair before any redemption.
+    /// @return pairAmount Proceeds in the pair before the wall hop, when there is one.
     function quoteSell(address token, uint256 amountIn, address receiveAsset)
         external
         returns (uint256 amountOut, uint256 pairAmount)
     {
-        address pair = _pairOf(token);
-        Hop[] memory hops = new Hop[](1);
-        hops[0] = _hop(factory.poolKeyOf(token), token);
-        try this.simulate(hops, amountIn, Currency.wrap(token), Currency.wrap(pair)) {}
+        Hop[] memory hops = _sellHops(token, receiveAsset);
+        try this.simulate(hops, amountIn, Currency.wrap(token), Currency.wrap(receiveAsset)) {}
         catch (bytes memory reason) {
-            (pairAmount,) = _decodeQuote(reason);
+            (amountOut, pairAmount) = _decodeQuote(reason);
         }
-        if (receiveAsset == pair) return (pairAmount, pairAmount);
-        if (receiveAsset != usdg) revert UnsupportedPayment();
-        (, uint256 assetId) = registry.assetIdOf(pair);
-        (,, amountOut,) = IRedemptionVault(registry.vault()).quoteRedeem(assetId, pairAmount);
+        if (hops.length == 1) pairAmount = amountOut;
+    }
+
+    function quoteWall(address synth, bool sellSynth, uint256 amountIn) external returns (uint256 amountOut) {
+        Hop[] memory hops = new Hop[](1);
+        hops[0] = sellSynth ? _hop(_wallKey(synth), synth) : _hopInto(_wallKey(synth), synth);
+        (Currency input, Currency output) =
+            sellSynth ? (Currency.wrap(synth), Currency.wrap(usdg)) : (Currency.wrap(usdg), Currency.wrap(synth));
+        try this.simulate(hops, amountIn, input, output) {}
+        catch (bytes memory reason) {
+            (amountOut,) = _decodeQuote(reason);
+        }
     }
 
     /// @notice Largest input (in payWith) a buy can use before the curve sells out, fees included.
@@ -274,11 +288,28 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
         }
     }
 
-    function _wallHop(address synth) private view returns (Hop memory) {
+    function _sellHops(address token, address receiveAsset) private view returns (Hop[] memory hops) {
+        address pair = _pairOf(token);
+        if (receiveAsset == pair) {
+            hops = new Hop[](1);
+            hops[0] = _hop(factory.poolKeyOf(token), token);
+        } else if (receiveAsset == usdg) {
+            hops = new Hop[](2);
+            hops[0] = _hop(factory.poolKeyOf(token), token);
+            hops[1] = _hop(_wallKey(pair), pair);
+        } else {
+            revert UnsupportedPayment();
+        }
+    }
+
+    function _wallKey(address synth) private view returns (PoolKey memory) {
         (bool found, uint256 assetId) = registry.assetIdOf(synth);
         if (!found) revert UnsupportedPayment();
-        PoolKey memory key = IPriceWall(registry.priceWall()).poolKeyOf(assetId);
-        return _hopInto(key, synth);
+        return IPriceWall(registry.priceWall()).poolKeyOf(assetId);
+    }
+
+    function _wallHop(address synth) private view returns (Hop memory) {
+        return _hopInto(_wallKey(synth), synth);
     }
 
     /// @dev Buy hop into a launch pool. While the curve is active the price limit is the curve end:
@@ -303,14 +334,6 @@ contract LaunchRouter is IUnlockCallback, ReentrancyGuardTransient {
         PoolKey memory key = factory.poolKeyOf(token);
         if (key.tickSpacing == 0) revert UnsupportedPayment();
         return Currency.unwrap(key.currency0) == token ? Currency.unwrap(key.currency1) : Currency.unwrap(key.currency0);
-    }
-
-    function _redeem(address synth, uint256 amount, address recipient) private returns (uint256) {
-        (bool found, uint256 assetId) = registry.assetIdOf(synth);
-        if (!found) revert UnsupportedPayment();
-        IRedemptionVault vault = IRedemptionVault(registry.vault());
-        IERC20(synth).forceApprove(address(vault), amount);
-        return vault.redeem(assetId, amount, 0, recipient);
     }
 
     function _decodeQuote(bytes memory reason) private pure returns (uint256 out, uint256 mid) {

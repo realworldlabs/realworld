@@ -135,6 +135,15 @@ Catatan Vercel:
 - Beli & jual kecil, klaim fee di Portfolio.
 - Keeper log: tidak ada `error` berulang.
 
+## Redeploy seluruh stack (mis. setelah perubahan kontrak RWA)
+
+1. Isi wallet deployer (± 0,006 ETH).
+2. Jalankan proxy RPC di terminal lain: `node contracts\script\rpc-proxy.mjs`.
+3. `powershell -ExecutionPolicy Bypass -File contracts\script\deploy-mainnet.ps1` (menjalankan seed harga lalu `DeployMainnet.s.sol`; minta password keystore `deployer`). Hasilnya `contracts/deployments/mainnet.json` — commit & push.
+4. Railway → service indexer → Variables: perbarui `REGISTRY`, `PRICE_WALL`, `FACTORY`, `BUYBACK_VAULT` ke alamat baru. Indexer otomatis menghapus data lama saat melihat registry berbeda dan sync ulang dari `startBlock` baru.
+5. Build & deploy web ulang (lihat catatan Vercel di atas).
+6. Wallet `OWNER`: `acceptOwnership` di AssetRegistry dan LaunchFactory baru.
+
 ## Menambah underlying baru nanti
 
 Aset di `keeper/assets.pending.json` (Big Mac, Charizard) butuh sumber kedua dulu. Setelah ada:

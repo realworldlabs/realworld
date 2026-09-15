@@ -1,20 +1,21 @@
 "use client";
 
-import { assetRegistryAbi, priceWallAbi, redemptionVaultAbi } from "@rwa/abi";
+import { assetRegistryAbi, launchRouterAbi } from "@rwa/abi";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
-import { erc20Abi, formatUnits, parseUnits } from "viem";
+import { Suspense, useDeferredValue, useState } from "react";
+import { erc20Abi, formatUnits, parseUnits, type Address } from "viem";
 import { useAccount, useConfig, useReadContract } from "wagmi";
-import { simulateContract } from "wagmi/actions";
+import { getPublicClient, simulateContract } from "wagmi/actions";
 import { AssetChart } from "@/components/AssetChart";
 import { CoinAvatar, Copy, CurveBar, Delta } from "@/components/bits";
-import { useAsset, useCoins } from "@/lib/api";
-import { deployments, robinhood } from "@/lib/config";
+import { useAsset, useCoins, type Asset } from "@/lib/api";
+import { deployments, robinhood, TOKEN_DECIMALS, USDG_DECIMALS } from "@/lib/config";
 import { formatAmount, formatPrice, formatUsd, timeAgo } from "@/lib/format";
 import { useTx } from "@/lib/tx";
 
-const ONE = 10n ** 18n;
+const WALL_SUPPLY = 1_000_000_000n * 10n ** 18n;
 
 export default function AssetPage() {
   return (
@@ -38,31 +39,21 @@ function AssetView() {
     args: [BigInt(assetId)],
     query: { refetchInterval: 15_000 },
   });
-  const { data: wall } = useReadContract({
-    address: deployments.priceWall,
-    abi: priceWallAbi,
-    functionName: "wallBalances",
-    args: [BigInt(assetId)],
-    query: { refetchInterval: 10_000 },
-  });
-  const { data: unitQuote } = useReadContract({
-    address: deployments.redemptionVault,
-    abi: redemptionVaultAbi,
-    functionName: "quoteRedeem",
-    args: [BigInt(assetId), ONE],
-    query: { refetchInterval: 10_000 },
-  });
 
   if (!asset) return <div className="shell page empty">Loading underlying…</div>;
-  const ratio = unitQuote ? Number(unitQuote[3]) / 1e18 : undefined;
   const explorer = robinhood.blockExplorers.default.url;
-  const potUsdg = wall ? BigInt(asset.pot) + wall[1] : BigInt(asset.pot);
+
+  // Circulating synth is everything not still on offer; coverage is how much of it the wall's USDG can buy back.
+  const circulating = WALL_SUPPLY - BigInt(asset.wallSynth);
+  const circulatingUsd = (Number(circulating) / 1e18) * asset.priceUsd;
+  const backingUsd = Number(asset.pot) / 10 ** USDG_DECIMALS;
+  const coverage = circulatingUsd > 0 ? Math.min(1, backingUsd / circulatingUsd) : 1;
 
   return (
     <div className="shell page">
       <div className="panel coin-head reveal">
         <div className="coin-ident">
-          <span className="avatar" style={{ width: 44, height: 44, fontSize: 14, background: "var(--bg-4)", color: "var(--amber)" }}>
+          <span className="avatar" style={{ width: 44, height: 44, fontSize: 14, background: "var(--paper-3)", color: "var(--green)" }}>
             {asset.symbol.slice(1, 4)}
           </span>
           <div style={{ minWidth: 0 }}>
@@ -90,8 +81,8 @@ function AssetView() {
               <span className="mute">updated {timeAgo(asset.lastUpdate)} ago</span>
             </div>
           </div>
-          <Metric label="Redemption ratio" value={ratio === undefined ? "—" : `${(ratio * 100).toFixed(2)}%`} down={ratio !== undefined && ratio < 0.9995} />
-          <Metric label="Pot · USDG" value={`$${formatAmount(potUsdg, 6, 0)}`} sub="vault + wall" />
+          <Metric label="Backing · USDG" value={formatUsd(backingUsd)} sub="bidding in the wall" />
+          <Metric label="Coverage" value={`${(coverage * 100).toFixed(1)}%`} sub={`of ${formatUsd(circulatingUsd, { compact: true })} in circulation`} down={coverage < 0.999} />
           <Metric label="Max move" value={cfg ? `±${(cfg.maxMoveTicks / 100).toFixed(0)}%` : "—"} sub={cfg ? `every ${Math.round(cfg.minUpdateInterval / 3600)}h+` : undefined} />
           <Metric label="Heartbeat" value={cfg ? `${Math.round(cfg.heartbeat / 3600)}h` : "—"} />
           <Metric label="Coins" value={String(asset.launches)} />
@@ -100,7 +91,7 @@ function AssetView() {
 
       {stale && (
         <div className="warn-bar" style={{ marginBottom: 12 }}>
-          No keeper update within the heartbeat. New launches against this underlying are blocked until it updates; trading and redemptions continue.
+          No keeper update within the heartbeat. New launches against this underlying are blocked until it updates; trading continues.
         </div>
       )}
 
@@ -144,7 +135,7 @@ function AssetView() {
                 <Link key={c.token} href={`/coin?token=${c.token}`} className="list-row" style={{ gridTemplateColumns: "34px 1fr 100px 80px 90px" }}>
                   <CoinAvatar coin={c} size={24} />
                   <span>
-                    <span style={{ color: "var(--fg)" }}>{c.symbol}</span> <span className="mute">{c.name}</span>
+                    <span style={{ color: "var(--fg, var(--ink))" }}>{c.symbol}</span> <span className="mute">{c.name}</span>
                   </span>
                   <span className="right">
                     <CurveBar progress={c.curveProgress} graduated={c.graduated} />
@@ -161,7 +152,7 @@ function AssetView() {
         </div>
 
         <div className="ticket reveal" style={{ animationDelay: "120ms" }}>
-          <RedeemTicket assetId={assetId} token={asset.token} symbol={asset.symbol} />
+          <WallTicket asset={asset} />
         </div>
       </div>
     </div>
@@ -184,43 +175,69 @@ function Metric({ label, value, sub, down }: { label: string; value: React.React
   );
 }
 
-function RedeemTicket({ assetId, token, symbol }: { assetId: number; token: `0x${string}`; symbol: string }) {
+/** Buys the synth from its wall with USDG, or sells it back into the wall's USDG, through the router. */
+function WallTicket({ asset }: { asset: Asset }) {
   const config = useConfig();
   const { address } = useAccount();
+  const [side, setSide] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
+  const [slippageBps, setSlippageBps] = useState(100);
   const tx = useTx();
-  let raw = 0n;
+
+  const sellSynth = side === "sell";
+  const inAsset: Address = sellSynth ? asset.token : deployments.usdg;
+  const inDecimals = sellSynth ? TOKEN_DECIMALS : USDG_DECIMALS;
+  const inSymbol = sellSynth ? asset.symbol : "USDG";
+  const outDecimals = sellSynth ? USDG_DECIMALS : TOKEN_DECIMALS;
+  const outSymbol = sellSynth ? "USDG" : asset.symbol;
+
+  let amountIn = 0n;
   try {
-    raw = amount ? parseUnits(amount, 18) : 0n;
+    amountIn = amount ? parseUnits(amount, inDecimals) : 0n;
   } catch {}
+  const deferred = useDeferredValue(amountIn);
 
   const { data: balance } = useReadContract({
-    address: token,
+    address: inAsset,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     query: { enabled: !!address, refetchInterval: 5_000 },
   });
-  const { data: quote } = useReadContract({
-    address: deployments.redemptionVault,
-    abi: redemptionVaultAbi,
-    functionName: "quoteRedeem",
-    args: [BigInt(assetId), raw],
-    query: { enabled: raw > 0n },
+
+  const quote = useQuery({
+    queryKey: ["wallQuote", asset.token, side, deferred.toString()],
+    enabled: deferred > 0n,
+    retry: false,
+    queryFn: async () => {
+      const { result } = await getPublicClient(config)!.simulateContract({
+        address: deployments.launchRouter,
+        abi: launchRouterAbi,
+        functionName: "quoteWall",
+        args: [asset.token, sellSynth, deferred],
+      });
+      return result;
+    },
   });
 
-  async function redeem() {
-    const minOut = quote ? (quote[2] * 99n) / 100n : 0n;
+  const minOut = quote.data ? (quote.data * BigInt(10_000 - slippageBps)) / 10_000n : 0n;
+  const insufficient = balance !== undefined && amountIn > balance;
+  const backing = BigInt(asset.pot);
+  // Selling more than the wall bids leaves the remainder unsold; warn before it happens.
+  const wouldExceed = sellSynth && quote.data !== undefined && quote.data >= backing && backing > 0n;
+
+  async function submit() {
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
     await tx.run(
-      `Redeeming ${symbol}`,
+      sellSynth ? `Selling ${asset.symbol}` : `Buying ${asset.symbol}`,
       () =>
         simulateContract(config, {
-          address: deployments.redemptionVault,
-          abi: redemptionVaultAbi,
-          functionName: "redeem",
-          args: [BigInt(assetId), raw, minOut, address!],
+          address: deployments.launchRouter,
+          abi: launchRouterAbi,
+          functionName: "swapWall",
+          args: [asset.token, sellSynth, amountIn, minOut, address!, deadline],
         }),
-      [{ token, spender: deployments.redemptionVault, amount: raw }],
+      [{ token: inAsset, spender: deployments.launchRouter, amount: amountIn }],
     );
     setAmount("");
   }
@@ -228,27 +245,35 @@ function RedeemTicket({ assetId, token, symbol }: { assetId: number; token: `0x$
   return (
     <aside className="panel">
       <div className="panel-head">
-        <span className="eyebrow">Redemption slip</span>
+        <span className="eyebrow">Wall ticket</span>
         <span className="mono mute" style={{ fontSize: 10.5 }}>
-          {symbol} → USDG
+          {asset.symbol} ⇄ USDG
         </span>
+      </div>
+      <div className="ticket-tabs">
+        {(["buy", "sell"] as const).map((s) => (
+          <button key={s} className="ticket-tab" data-side={s} data-active={side === s} onClick={() => setSide(s)}>
+            {s}
+          </button>
+        ))}
       </div>
       <div className="panel-body stack">
         <p className="hint" style={{ margin: 0 }}>
-          The vault buys {symbol} back at the wall price from this asset&apos;s own USDG pot, minus 0.3%. If the price has risen faster than
-          the pot, every holder takes the same pro-rata haircut.
+          {sellSynth
+            ? `Sells ${asset.symbol} into the USDG the wall holds, at the wall price less a one-tick spread. Any router can do the same.`
+            : `Buys ${asset.symbol} from the wall at its price. What you pay stays in the wall as the bid you can sell back into.`}
         </p>
         <div className="field">
           <div className="between">
-            <label htmlFor="redeem" className="label">
-              Amount · {symbol}
+            <label htmlFor="wall-amount" className="label">
+              Amount · {inSymbol}
             </label>
-            <span className="hint mono">Bal {balance !== undefined ? formatAmount(balance, 18) : "—"}</span>
+            <span className="hint mono">Bal {balance !== undefined ? formatAmount(balance, inDecimals, sellSynth ? 4 : 2) : "—"}</span>
           </div>
-          <input id="redeem" className="input input-lg" inputMode="decimal" placeholder="0.0" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} />
+          <input id="wall-amount" className="input input-lg" inputMode="decimal" placeholder="0.0" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} />
           <div className="quick">
             {[25, 50, 75, 100].map((p) => (
-              <button key={p} disabled={balance === undefined} onClick={() => balance !== undefined && setAmount(formatUnits((balance * BigInt(p)) / 100n, 18))}>
+              <button key={p} disabled={balance === undefined} onClick={() => balance !== undefined && setAmount(formatUnits((balance * BigInt(p)) / 100n, inDecimals))}>
                 {p === 100 ? "MAX" : `${p}%`}
               </button>
             ))}
@@ -256,28 +281,40 @@ function RedeemTicket({ assetId, token, symbol }: { assetId: number; token: `0x$
         </div>
         <div>
           <div className="ticket-row">
-            <span>Gross</span>
-            <span className="v">{quote ? `${formatAmount(quote[0], 6)} USDG` : "—"}</span>
+            <span>You receive (est.)</span>
+            <strong>{quote.isFetching ? "…" : quote.data !== undefined ? `${formatAmount(quote.data, outDecimals, sellSynth ? 2 : 4)} ${outSymbol}` : "—"}</strong>
           </div>
           <div className="ticket-row">
-            <span>Fee (0.3%)</span>
-            <span className="v">{quote ? formatAmount(quote[1], 6) : "—"}</span>
+            <span>Min. after slippage</span>
+            <span className="v">{quote.data !== undefined ? formatAmount(minOut, outDecimals, sellSynth ? 2 : 4) : "—"}</span>
           </div>
           <div className="ticket-row">
-            <span>Pot ratio</span>
-            <span className="v">{quote ? `${(Number(quote[3]) / 1e16).toFixed(2)}%` : "—"}</span>
+            <span>Wall bid · USDG</span>
+            <span className="v">{formatAmount(backing, USDG_DECIMALS, 0)}</span>
           </div>
           <div className="ticket-row">
-            <span>You receive</span>
-            <strong>{quote ? `${formatAmount(quote[2], 6)} USDG` : "—"}</strong>
+            <span>Slippage</span>
+            <span className="seg" style={{ padding: 1 }}>
+              {[50, 100, 300].map((b) => (
+                <button key={b} data-active={slippageBps === b} onClick={() => setSlippageBps(b)} style={{ padding: "2px 7px", fontSize: 10.5 }}>
+                  {(b / 100).toFixed(b % 100 ? 1 : 0)}%
+                </button>
+              ))}
+            </span>
           </div>
         </div>
+        {wouldExceed && <div className="warn-bar">The wall only bids {formatAmount(backing, USDG_DECIMALS, 0)} USDG right now. Anything beyond that stays unsold in your wallet.</div>}
+        {quote.isError && (
+          <div className="status" data-kind="error" style={{ marginTop: 0 }}>
+            No quote for this amount.
+          </div>
+        )}
         <button
-          className="btn btn-lg btn-block btn-amber"
-          disabled={!address || raw === 0n || (balance !== undefined && raw > balance) || tx.state.status === "pending"}
-          onClick={redeem}
+          className={`btn btn-lg btn-block ${sellSynth ? "btn-down" : "btn-up"}`}
+          disabled={!address || amountIn === 0n || insufficient || quote.data === undefined || tx.state.status === "pending"}
+          onClick={submit}
         >
-          {!address ? "Connect a wallet" : tx.state.status === "pending" ? tx.state.label : `Redeem ${symbol}`}
+          {!address ? "Connect a wallet" : insufficient ? `Not enough ${inSymbol}` : tx.state.status === "pending" ? tx.state.label : `${sellSynth ? "Sell" : "Buy"} ${asset.symbol}`}
         </button>
         {tx.state.status === "error" && (
           <div className="status" data-kind="error" style={{ marginTop: 0 }}>
@@ -286,7 +323,7 @@ function RedeemTicket({ assetId, token, symbol }: { assetId: number; token: `0x$
         )}
         {tx.state.status === "success" && (
           <div className="status" data-kind="success" style={{ marginTop: 0 }}>
-            Redeemed · {tx.state.hash.slice(0, 18)}…
+            Filled · {tx.state.hash.slice(0, 18)}…
           </div>
         )}
       </div>

@@ -15,7 +15,6 @@ import {AssetRegistry} from "../../src/rwa/AssetRegistry.sol";
 import {IAssetRegistry} from "../../src/rwa/interfaces/IAssetRegistry.sol";
 import {WallHook} from "../../src/rwa/WallHook.sol";
 import {PriceWall} from "../../src/rwa/PriceWall.sol";
-import {RedemptionVault} from "../../src/rwa/RedemptionVault.sol";
 import {PriceMath} from "../../src/libraries/PriceMath.sol";
 
 /// @notice Deploys a local PoolManager plus the full synthetic RWA stack.
@@ -23,7 +22,7 @@ import {PriceMath} from "../../src/libraries/PriceMath.sol";
 abstract contract RwaFixture is Deployers {
     uint256 internal constant PRICE_SCALE = 1e30; // 18-dec synth priced in 6-dec USDG
     address internal constant WALL_HOOK_ADDRESS = address(
-        uint160(Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.BEFORE_SWAP_FLAG)
+        uint160(Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.AFTER_SWAP_FLAG)
             | uint160(0x4444 << 144)
     );
 
@@ -38,7 +37,6 @@ abstract contract RwaFixture is Deployers {
     AssetRegistry internal registry;
     WallHook internal wallHook;
     PriceWall internal priceWall;
-    RedemptionVault internal vault;
 
     function usdgAt() internal pure virtual returns (address);
 
@@ -52,10 +50,9 @@ abstract contract RwaFixture is Deployers {
         deployCodeTo("WallHook.sol:WallHook", abi.encode(manager, registry), WALL_HOOK_ADDRESS);
         wallHook = WallHook(WALL_HOOK_ADDRESS);
         priceWall = new PriceWall(manager, registry, IHooks(WALL_HOOK_ADDRESS), address(usdgToken));
-        vault = new RedemptionVault(registry, address(usdgToken));
 
         vm.prank(owner);
-        registry.wire(address(priceWall), address(vault));
+        registry.wire(address(priceWall));
     }
 
     function macroConfig(string memory symbol) internal pure returns (IAssetRegistry.AssetConfig memory c) {
@@ -109,6 +106,29 @@ abstract contract RwaFixture is Deployers {
         );
         vm.stopPrank();
         synthOut = synth.balanceOf(buyer) - before;
+    }
+
+    /// @notice Sells synth into the wall with an exact synth input, through a plain v4 router like any bot would.
+    /// @return usdgOut USDG received. Input the wall could not absorb stays with the seller.
+    function sellSynth(uint256 assetId, address seller, uint256 synthIn) internal returns (uint256 usdgOut) {
+        PoolKey memory key = priceWall.poolKeyOf(assetId);
+        bool synthIs0 = priceWall.synthIsToken0(assetId);
+        uint256 before = usdgToken.balanceOf(seller);
+
+        vm.startPrank(seller);
+        synthOf(assetId).approve(address(swapRouter), synthIn);
+        swapRouter.swap(
+            key,
+            SwapParams({
+                zeroForOne: synthIs0,
+                amountSpecified: -int256(synthIn),
+                sqrtPriceLimitX96: synthIs0 ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
+            }),
+            PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),
+            ""
+        );
+        vm.stopPrank();
+        usdgOut = usdgToken.balanceOf(seller) - before;
     }
 
     function movePrice(uint256 assetId, int24 newTick) internal {

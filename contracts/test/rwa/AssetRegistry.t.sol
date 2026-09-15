@@ -48,7 +48,7 @@ contract AssetRegistryTest is RwaFixture {
     function test_wire_onlyOnce() public {
         vm.prank(owner);
         vm.expectRevert(AssetRegistry.AlreadyWired.selector);
-        registry.wire(address(1), address(2));
+        registry.wire(address(1));
     }
 
     function test_pause_guardianCanPauseButNotUnpause() public {

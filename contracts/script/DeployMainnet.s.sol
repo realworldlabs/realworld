@@ -60,7 +60,6 @@ contract DeployMainnet is StackDeployer {
         vm.serializeAddress(j, "assetRegistry", address(rwa.registry));
         vm.serializeAddress(j, "wallHook", address(rwa.wallHook));
         vm.serializeAddress(j, "priceWall", address(rwa.priceWall));
-        vm.serializeAddress(j, "redemptionVault", address(rwa.vault));
         vm.serializeAddress(j, "launchHook", address(lp.hook));
         vm.serializeAddress(j, "launchFactory", address(lp.factory));
         vm.serializeAddress(j, "launchTokenDeployer", address(lp.tokenDeployer));

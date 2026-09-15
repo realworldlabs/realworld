@@ -9,7 +9,7 @@ export interface Deployments {
   poolManager: Address;
   assetRegistry: Address;
   priceWall: Address;
-  redemptionVault: Address;
+  wallHook: Address;
   launchFactory: Address;
   launchHook: Address;
   feeEscrow: Address;

@@ -311,8 +311,7 @@ export function createApi(db: Db) {
       .where(eq(schema.assetPrice.assetId, id))
       .orderBy(desc(schema.assetPrice.timestamp))
       .limit(int(c.req.query("limit"), 100, 1000));
-    const redemptions = await db.select().from(schema.redemption).where(eq(schema.redemption.assetId, id)).orderBy(desc(schema.redemption.timestamp)).limit(20);
-    return json(c, { ...row, ...hist, prices, redemptions });
+    return json(c, { ...row, ...hist, prices });
   });
 
   // ---------------------------------------------------------------- accounts
