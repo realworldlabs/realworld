@@ -139,7 +139,7 @@ Catatan Vercel:
 
 1. Isi wallet deployer (± 0,006 ETH).
 2. Jalankan proxy RPC di terminal lain: `node contracts\script\rpc-proxy.mjs`.
-3. `powershell -ExecutionPolicy Bypass -File contracts\script\deploy-mainnet.ps1` (menjalankan seed harga lalu `DeployMainnet.s.sol`; minta password keystore `deployer`). Hasilnya `contracts/deployments/mainnet.json` — commit & push.
+3. `powershell -ExecutionPolicy Bypass -File contracts\script\deploy-mainnet.ps1` (menjalankan seed harga lalu `DeployMainnet.s.sol`; minta password keystore `deployer`). Hasilnya `contracts/deployments/mainnet.json` — **periksa `startBlock`**: `block.number` di skrip bisa mengembalikan nomor blok L1 (mis. 25980808); ganti dengan blok tx pertama dari `broadcast/DeployMainnet.s.sol/4663/run-latest.json`. Lalu commit & push.
 4. Railway → service indexer → Variables: perbarui `REGISTRY`, `PRICE_WALL`, `FACTORY`, `BUYBACK_VAULT` ke alamat baru. Indexer otomatis menghapus data lama saat melihat registry berbeda dan sync ulang dari `startBlock` baru.
 5. Build & deploy web ulang (lihat catatan Vercel di atas).
 6. Wallet `OWNER`: `acceptOwnership` di AssetRegistry dan LaunchFactory baru.
