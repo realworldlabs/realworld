@@ -30,7 +30,8 @@ const COLUMNS = [
     title: "Chain",
     links: [
       { href: "https://robinhoodchain.blockscout.com", label: "Block explorer", external: true },
-      { href: "https://github.com/realworldlabs/realworld", label: "Source code", external: true },
+      { href: "https://robinhoodchain.blockscout.com/address/0x31d1A8c14160fF7Affc8A3f6240965fF3215787D", label: "Launch factory", external: true },
+      { href: "https://robinhoodchain.blockscout.com/address/0xA5609FDdC8B60e8ae21aFacF9198943D228a93B4", label: "Asset registry", external: true },
     ],
   },
 ];
