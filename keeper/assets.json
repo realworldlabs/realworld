@@ -159,7 +159,8 @@
           "market": "buff163",
           "marketHashName": "AK-47 | Redline (Field-Tested)"
         }
-      ]
+      ],
+      "intervalSec": 1800
     },
     {
       "assetId": 9,
@@ -178,7 +179,8 @@
           "slug": "base-set-1st-edition/charizard-4-holo-1st-edition",
           "grade": "PSA9"
         }
-      ]
+      ],
+      "intervalSec": 3600
     },
     {
       "assetId": 10,
@@ -197,7 +199,8 @@
           "slug": "evolving-skies/umbreon-vmax-215",
           "grade": "PSA10"
         }
-      ]
+      ],
+      "intervalSec": 3600
     },
     {
       "assetId": 11,
@@ -215,6 +218,151 @@
           "type": "pokemonprice",
           "slug": "base-set-unlimited/blastoise-2-holo",
           "grade": "PSA10"
+        }
+      ],
+      "intervalSec": 3600
+    },
+    {
+      "assetId": 12,
+      "symbol": "sUSCARS",
+      "name": "US Used Cars & Trucks Index (CPI)",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "bls",
+          "series": "CUUR0000SETA02"
+        },
+        {
+          "type": "fredCsv",
+          "series": "CUUR0000SETA02",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "assetId": 13,
+      "symbol": "sNEWCARS",
+      "name": "US New Vehicles Index (CPI)",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "bls",
+          "series": "CUUR0000SETA01"
+        },
+        {
+          "type": "fredCsv",
+          "series": "CUUR0000SETA01",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "assetId": 14,
+      "symbol": "sCAMRY",
+      "name": "2018 Toyota Camry (1/1000 car, US used listings)",
+      "category": "COLLECTIBLE",
+      "unitScale": 0.001,
+      "intervalSec": 21600,
+      "rules": {
+        "agreementBps": 1000,
+        "minSources": 1,
+        "maxAgeMs": 21600000
+      },
+      "sources": [
+        {
+          "type": "autodev",
+          "make": "Toyota",
+          "model": "Camry",
+          "year": "2018",
+          "miles": "15000-90000"
+        }
+      ]
+    },
+    {
+      "assetId": 15,
+      "symbol": "sCIVIC",
+      "name": "2018 Honda Civic (1/1000 car, US used listings)",
+      "category": "COLLECTIBLE",
+      "unitScale": 0.001,
+      "intervalSec": 21600,
+      "rules": {
+        "agreementBps": 1000,
+        "minSources": 1,
+        "maxAgeMs": 21600000
+      },
+      "sources": [
+        {
+          "type": "autodev",
+          "make": "Honda",
+          "model": "Civic",
+          "year": "2018",
+          "miles": "15000-90000"
+        }
+      ]
+    },
+    {
+      "assetId": 16,
+      "symbol": "sF150",
+      "name": "2019 Ford F-150 (1/1000 car, US used listings)",
+      "category": "COLLECTIBLE",
+      "unitScale": 0.001,
+      "intervalSec": 21600,
+      "rules": {
+        "agreementBps": 1000,
+        "minSources": 1,
+        "maxAgeMs": 21600000
+      },
+      "sources": [
+        {
+          "type": "autodev",
+          "make": "Ford",
+          "model": "F-150",
+          "year": "2019",
+          "miles": "15000-90000"
+        }
+      ]
+    },
+    {
+      "assetId": 17,
+      "symbol": "sMODEL3",
+      "name": "2021 Tesla Model 3 (1/1000 car, US used listings)",
+      "category": "COLLECTIBLE",
+      "unitScale": 0.001,
+      "intervalSec": 21600,
+      "rules": {
+        "agreementBps": 1000,
+        "minSources": 1,
+        "maxAgeMs": 21600000
+      },
+      "sources": [
+        {
+          "type": "autodev",
+          "make": "Tesla",
+          "model": "Model 3",
+          "year": "2021",
+          "miles": "15000-90000"
+        }
+      ]
+    },
+    {
+      "assetId": 18,
+      "symbol": "sMIATA",
+      "name": "2017 Mazda MX-5 Miata (1/1000 car, US used listings)",
+      "category": "COLLECTIBLE",
+      "unitScale": 0.001,
+      "intervalSec": 21600,
+      "rules": {
+        "agreementBps": 1000,
+        "minSources": 1,
+        "maxAgeMs": 21600000
+      },
+      "sources": [
+        {
+          "type": "autodev",
+          "make": "Mazda",
+          "model": "MX-5 Miata",
+          "year": "2017",
+          "miles": "15000-90000"
         }
       ]
     }
