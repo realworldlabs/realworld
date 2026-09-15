@@ -27,6 +27,11 @@ export default function DocsPage() {
           readings it used.
         </p>
         <p>
+          A few collectibles have only one public publisher (graded Pokémon cards, priced from eBay sales as compiled by
+          pokemonprice.com). Those are marked <strong>single source</strong> on their page: the on-chain limits still apply, but
+          there is no second source to disagree with, so treat their prices with more caution.
+        </p>
+        <p>
           The wall has two sides. Synth is offered at the wall price, and every USDG ever paid for it <strong>stays in the wall</strong>,
           bidding one tick below. So an underlying can be sold back to USDG by anyone, through any router, as long as the wall still
           holds the dollars that bought in. The keeper moves both sides together. If the price has risen faster than the money in

@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 import { aggregate, DEFAULT_RULES } from "../src/aggregate.ts";
 import { collect, normalizePeriod } from "../src/sources/index.ts";
@@ -88,5 +89,15 @@ describe("per-source scale", () => {
   it("normalises a source before aggregation", async () => {
     const { observations } = await collect([{ type: "steam", marketHashName: "AK-47 | Redline (Field-Tested)", scale: 0.5 }], c);
     expect(observations[0]!.price).toBeCloseTo(36.8 * 0.5, 6);
+  });
+});
+
+describe("pokemonprice", () => {
+  it("reads the per-grade summary, not the transaction rows", async () => {
+    const { parsePokemonPrice } = await import("../src/sources/index.ts");
+    const html = fs.readFileSync(new URL("./fixtures/pokemonprice-umbreon.html", import.meta.url), "utf8");
+    expect(parsePokemonPrice(html, "PSA10")).toBe(1748);
+    expect(parsePokemonPrice(html, "Raw")).toBe(991);
+    expect(() => parsePokemonPrice(html, "BGS10")).toThrow(/no BGS10/);
   });
 });

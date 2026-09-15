@@ -19,24 +19,6 @@
           "url": "https://example.com/attest/bigmac-usa.json"
         }
       ]
-    },
-    {
-      "assetId": null,
-      "symbol": "sCHARIZARD",
-      "name": "Charizard Base Set PSA 10 (1/1000)",
-      "category": "COLLECTIBLE",
-      "unitScale": 0.001,
-      "sources": [
-        {
-          "type": "pricecharting",
-          "id": "REPLACE_WITH_PRODUCT_ID",
-          "field": "manual-only-price"
-        },
-        {
-          "type": "attested",
-          "url": "https://example.com/attest/charizard-psa10.json"
-        }
-      ]
     }
   ]
 }

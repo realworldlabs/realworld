@@ -61,6 +61,11 @@ function AssetView() {
                 {asset.symbol}
               </span>
               <span className="chip chip-amber">{asset.category}</span>
+              {asset.metadataUri.startsWith("sources:") && !asset.metadataUri.includes(",") && (
+                <span className="chip" title="Priced from one publisher (eBay-derived sales data). The two-source rule does not apply to this asset.">
+                  SINGLE SOURCE
+                </span>
+              )}
               {asset.paused ? <span className="chip chip-down">PAUSED</span> : stale ? <span className="chip chip-down">STALE</span> : <span className="chip chip-up">LIVE</span>}
             </div>
             <div className="row mono mute" style={{ fontSize: 11, marginTop: 4, flexWrap: "wrap" }}>

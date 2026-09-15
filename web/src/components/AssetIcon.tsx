@@ -90,8 +90,11 @@ const GLYPHS: Record<string, React.ReactNode> = {
   ),
 };
 
+/** Symbols that share a glyph. */
+const ALIAS: Record<string, string> = { sMOONBREON: "sCHARIZARD", sBLASTOISE: "sCHARIZARD" };
+
 export function AssetIcon({ symbol, size = 18, className, title }: { symbol: string; size?: number; className?: string; title?: string }) {
-  const glyph = GLYPHS[symbol];
+  const glyph = GLYPHS[ALIAS[symbol] ?? symbol];
   const stroke = size >= 36 ? 1.6 : size >= 26 ? 1.8 : 2.1;
   return (
     <span className={`asset-icon${className ? ` ${className}` : ""}`} style={{ width: size, height: size }} title={title} aria-hidden="true">

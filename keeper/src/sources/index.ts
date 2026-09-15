@@ -174,6 +174,34 @@ const economistBigMac: SourceAdapter = async (spec, ctx) => {
   }));
 };
 
+/**
+ * pokemonprice.com card page: the per-grade "fair" figure derived from recent eBay sales. Server-rendered, so the
+ * summary list ("Raw | $163 | PSA9 | $1,075 | PSA10 | ...") is read from the HTML text. `grade` is "Raw", "PSA9",
+ * "PSA10" and so on. eBay-derived and single-publisher: assets built on it must say so in their rules and metadata.
+ */
+export function parsePokemonPrice(html: string, grade: string): number {
+  const text = html
+    .replace(/<script[\s\S]*?<\/script>/g, " ")
+    .replace(/<[^>]+>/g, " | ")
+    .replace(/\s*\|\s*(\|\s*)+/g, " | ")
+    .replace(/\s+/g, " ");
+  const tail = text.slice(text.indexOf("Confidence:"));
+  const want = grade.replace(/\s+/g, "").toUpperCase();
+  for (const m of tail.matchAll(/\|\s*([A-Za-z]+ ?[0-9]*)\s*\|\s*\$([0-9,]+(?:\.[0-9]+)?)\s*(?=\|)/g)) {
+    if (m[1]!.replace(/\s+/g, "").toUpperCase() === want) return Number(m[2]!.replace(/,/g, ""));
+  }
+  throw new Error(`pokemonprice: no ${grade} price`);
+}
+
+const pokemonprice: SourceAdapter = async (spec, ctx) => {
+  const slug = str(spec, "slug");
+  const grade = (spec.grade as string) ?? "PSA10";
+  const html = await getText(ctx, `https://www.pokemonprice.com/${slug}`, {
+    headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128 Safari/537.36" },
+  });
+  return [{ source: `pokemonprice:${grade}`, price: parsePokemonPrice(html, grade), observedAt: ctx.now(), raw: { slug, grade } }];
+};
+
 /** PriceCharting product API (paid token). Prices are in cents. */
 const pricecharting: SourceAdapter = async (spec, ctx) => {
   const id = str(spec, "id");
@@ -205,6 +233,7 @@ export const ADAPTERS: Record<string, SourceAdapter> = {
   skinport,
   csgotrader,
   economistBigMac,
+  pokemonprice,
   pricecharting,
   attested,
 };
