@@ -1594,6 +1594,25 @@ a.list-row:hover,
   font-size: 20px;
 }
 
+.footer-social {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 5px 9px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.footer-social:hover {
+  color: var(--green);
+  border-color: var(--green);
+}
+
 .footer-links {
   list-style: none;
   margin: 0;
