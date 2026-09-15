@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Big_Shoulders, IBM_Plex_Mono, Manrope } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Nav } from "@/components/Nav";
 import { TickerTape } from "@/components/TickerTape";
 
-const display = Big_Shoulders({ subsets: ["latin"], weight: ["600", "700", "800"], variable: "--font-big-shoulders" });
+const display = Fraunces({ subsets: ["latin"], weight: "variable", style: ["normal", "italic"], axes: ["opsz"], variable: "--font-fraunces" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-mono" });
-const body = Manrope({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-manrope" });
+const body = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-sans" });
 
 export const metadata: Metadata = {
   title: "RealWorld — memecoins priced in real-world assets",

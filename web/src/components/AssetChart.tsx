@@ -23,7 +23,7 @@ export function AssetChart({ history, current }: { history: { t: number; p: numb
       localization: { priceFormatter: (p: number) => `$${formatPrice(p)}` },
     });
     seriesRef.current = chart.addSeries(LineSeries, {
-      color: "#ffb000",
+      color: "#0f5b3f",
       lineWidth: 2,
       lineType: LineType.WithSteps,
       priceFormat: { type: "custom", minMove: 1e-6, formatter: (p: number) => `$${formatPrice(p)}` },

@@ -60,8 +60,15 @@ export default function BoardPage() {
   return (
     <div className="shell page">
       <section className="mast">
-        <div className="panel reveal" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <div className="eyebrow">Robinhood Chain · Synthetic RWA pairs</div>
+        <div className="mast-card reveal">
+          <div className="seal">
+            ON-CHAIN
+            <br />
+            PRICED
+            <br />
+            ASSETS
+          </div>
+          <div className="eyebrow">Robinhood Chain · Synthetic real-world assets</div>
           <h1 className="display mast-title" style={{ marginTop: 6 }}>
             Memecoins, priced <em>in the real world.</em>
           </h1>
@@ -70,12 +77,15 @@ export default function BoardPage() {
             Fees are paid in it. Graduation locks liquidity against it.
           </p>
           <div className="row" style={{ marginTop: 14 }}>
-            <Link href="/launch" className="btn btn-amber">
+            <Link href="/launch" className="btn btn-ink">
               Launch a coin
             </Link>
             <Link href="/docs" className="btn">
               How it works
             </Link>
+          </div>
+          <div className="sources">
+            Priced from <b>BLS</b> · <b>FRED</b> · <b>NY Fed</b> · <b>Eurostat</b> · <b>Steam</b> · <b>Skinport</b> — two sources must agree before a wall moves
           </div>
         </div>
         <div className="stats reveal" style={{ animationDelay: "60ms" }}>

@@ -13,13 +13,13 @@ const INTERVALS = [
 ];
 
 export const CHART_THEME = {
-  text: "#aaa793",
-  grid: "#1c1f17",
-  border: "#2f3427",
-  crosshair: "#9a6a00",
-  up: "#4fe08f",
-  down: "#ff6553",
-  volume: "#9a6a0066",
+  text: "#7c786a",
+  grid: "#e9e3d3",
+  border: "#c4bba2",
+  crosshair: "#b8892a",
+  up: "#0f7a4c",
+  down: "#b3321c",
+  volume: "#b8892a55",
 };
 
 export function CoinChart({ token }: { token: string }) {
@@ -81,7 +81,7 @@ export function CoinChart({ token }: { token: string }) {
     });
     seriesRef.current.price.setData(bars);
     seriesRef.current.volume.setData(
-      candles.map((c) => ({ time: c.bucket as UTCTimestamp, value: c.volumeUsd, color: c.close >= c.open ? "#4fe08f55" : "#ff655355" })),
+      candles.map((c) => ({ time: c.bucket as UTCTimestamp, value: c.volumeUsd, color: c.close >= c.open ? "#0f7a4c44" : "#b3321c44" })),
     );
     chartRef.current?.timeScale().fitContent();
   }, [candles]);
