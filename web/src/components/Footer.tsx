@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 
 const COLUMNS = [
   {
@@ -42,7 +43,7 @@ export function Footer() {
       <div className="shell footer-grid">
         <div className="footer-brand">
           <span className="brand">
-            <span className="brand-mark">R</span>
+            <BrandMark className="brand-mark" />
             RealWorld
           </span>
           <p className="hint" style={{ maxWidth: 300, marginTop: 10 }}>

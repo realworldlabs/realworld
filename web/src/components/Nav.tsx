@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useAccount, useConnect } from "wagmi";
 import { DEVNET } from "@/lib/config";
+import { BrandMark } from "@/components/BrandMark";
 
 const LINKS = [
   { href: "/", label: "Explore" },
@@ -21,7 +22,7 @@ export function Nav() {
     <header className="nav">
       <div className="shell nav-grid">
         <Link href="/" className="brand" aria-label="RealWorld home">
-          <span className="brand-mark">R</span>
+          <BrandMark className="brand-mark" />
           RealWorld
         </Link>
         <nav className="nav-pill">

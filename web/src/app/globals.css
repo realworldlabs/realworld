@@ -283,18 +283,14 @@ button {
 }
 
 .brand-mark {
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  background: var(--green);
-  color: var(--paper);
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--paper), 0 0 0 3px var(--gold);
+  width: 26px;
+  height: 26px;
+  color: var(--ink);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.brand:hover .brand-mark {
+  transform: rotate(-12deg);
 }
 
 .nav-links {

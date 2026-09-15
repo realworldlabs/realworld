@@ -122,7 +122,7 @@ Sukses kalau `https://<domain-indexer>/ready` menjawab 200 dan `/stats` menampil
    - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` = (opsional) dari cloud.reown.com
    - `ENABLE_EXPERIMENTAL_COREPACK` = `1` (agar Vercel memakai pnpm 11 sesuai `packageManager`)
    - **Jangan** set `NEXT_PUBLIC_DEVNET`
-4. Deploy. Tambahkan domain sendiri di Settings → Domains bila ada.
+4. Deploy. Domain produksi: **realworld.family** (+ `www`), ditambahkan lewat `vercel domains add realworld.family realworld`; nameserver domain diarahkan ke `ns1.vercel-dns.com` / `ns2.vercel-dns.com` di registrar (Hostinger), sehingga DNS-nya dikelola Vercel. Cek status: `vercel domains inspect realworld.family`.
 
 Catatan Vercel:
 - Jangan tandai `DEPLOYMENTS_FILE` sebagai *sensitive*: `vercel build` lokal menerima nilai `[SENSITIVE]` dan build gagal (sengaja, lihat `web/next.config.ts`). Deploy dari CLI: `cd web && NEXT_PUBLIC_DEVNET= DEPLOYMENTS_FILE=<path absolut mainnet.json> vercel build --prod && vercel deploy --prebuilt --prod` (`vercel build` ikut membaca `web/.env.local`, jadi variabel devnet harus dikosongkan eksplisit).
