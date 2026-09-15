@@ -125,7 +125,7 @@ Sukses kalau `https://<domain-indexer>/ready` menjawab 200 dan `/stats` menampil
 4. Deploy. Tambahkan domain sendiri di Settings → Domains bila ada.
 
 Catatan Vercel:
-- Jangan tandai `DEPLOYMENTS_FILE` sebagai *sensitive*: `vercel build` lokal menerima nilai `[SENSITIVE]` dan build gagal (sengaja, lihat `web/next.config.ts`). Deploy dari CLI: `cd web && DEPLOYMENTS_FILE=<path absolut mainnet.json> vercel build --prod && vercel deploy --prebuilt --prod`.
+- Jangan tandai `DEPLOYMENTS_FILE` sebagai *sensitive*: `vercel build` lokal menerima nilai `[SENSITIVE]` dan build gagal (sengaja, lihat `web/next.config.ts`). Deploy dari CLI: `cd web && NEXT_PUBLIC_DEVNET= DEPLOYMENTS_FILE=<path absolut mainnet.json> vercel build --prod && vercel deploy --prebuilt --prod` (`vercel build` ikut membaca `web/.env.local`, jadi variabel devnet harus dikosongkan eksplisit).
 - Hobby plan memblokir deployment jika email author commit tidak cocok dengan akun GitHub yang terhubung. Pakai `git config user.email "<id>+<username>@users.noreply.github.com"`.
 
 ## 6. Cek setelah live
