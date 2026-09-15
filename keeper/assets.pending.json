@@ -1,24 +1,6 @@
 {
-  "_note": "Not deployed at launch: each needs a second independent source (attested feed or paid API). Add on-chain with contracts/script/AddAsset.s.sol, then move into assets.json with the id the registry assigned.",
+  "_note": "Not deployed: each needs a second independent public source. Big Mac has a single publisher (The Economist, twice a year). A graded Charizard is only priced by paid feeds (PriceCharting, PSA, eBay); raw-card markets (TCGplayer vs Cardmarket) disagree by far more than 10%. Add on-chain with contracts/script/add-assets.ps1 once a second source exists.",
   "assets": [
-    {
-      "assetId": null,
-      "symbol": "sREDLINE",
-      "name": "AK-47 Redline (Field-Tested)",
-      "category": "COLLECTIBLE",
-      "_why": "Steam's median swings 20%+ within hours against Skinport; needs a third marketplace so the median can drop the outlier.",
-      "sources": [
-        {
-          "type": "steam",
-          "marketHashName": "AK-47 | Redline (Field-Tested)",
-          "scale": 0.75
-        },
-        {
-          "type": "skinport",
-          "marketHashName": "AK-47 | Redline (Field-Tested)"
-        }
-      ]
-    },
     {
       "assetId": null,
       "symbol": "sBIGMAC",

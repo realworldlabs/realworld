@@ -148,7 +148,9 @@ Catatan Vercel:
 
 ## Menambah underlying baru nanti
 
-Aset di `keeper/assets.pending.json` (Big Mac, Charizard) butuh sumber kedua dulu. Setelah ada:
+Alur: tambahkan entri ke `keeper/assets.next.json` dengan `assetId` berurutan, cek `ASSETS_FILE=assets.next.json pnpm --filter @rwa/keeper probe` sampai semua sumber sepakat, lalu:
 
-1. Dari multisig `OWNER`: jalankan `script/AddAsset.s.sol` (lihat header skrip) atau panggil `AssetRegistry.addAsset`.
-2. Pindahkan entrinya ke `keeper/assets.json` dengan `assetId` yang diberikan registry, lalu redeploy keeper.
+1. Jalankan proxy RPC (`node contracts\script\rpc-proxy.mjs`) dan `powershell -ExecutionPolicy Bypass -File contracts\script\add-assets.ps1` (seed harga, lalu `AddAssets.s.sol` dari keystore pemilik registry).
+2. Salin `keeper/assets.next.json` ke `keeper/assets.json`, commit, push; Railway mendeploy ulang keeper, indexer menangkap aset baru dari event `AssetAdded`.
+
+Aset di `keeper/assets.pending.json` (Big Mac, Charizard) masih menunggu sumber kedua yang independen: Big Mac hanya diterbitkan The Economist, Charizard bergrade hanya ada di feed berbayar (PriceCharting, PSA, eBay). sREDLINE (2026-09-16) memakai tiga pasar tunai: Skinport listing terendah, CSFloat dan Buff163 lewat feed CSGO Trader; Steam dibuang karena premi dompet Steam ±50%.

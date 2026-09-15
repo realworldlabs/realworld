@@ -7,8 +7,15 @@
       "name": "US CPI-U Index",
       "category": "MACRO",
       "sources": [
-        { "type": "bls", "series": "CUUR0000SA0" },
-        { "type": "fredCsv", "series": "CPIAUCNS", "period": "month" }
+        {
+          "type": "bls",
+          "series": "CUUR0000SA0"
+        },
+        {
+          "type": "fredCsv",
+          "series": "CPIAUCNS",
+          "period": "month"
+        }
       ]
     },
     {
@@ -17,8 +24,15 @@
       "name": "Effective Fed Funds Rate",
       "category": "MACRO",
       "sources": [
-        { "type": "nyfed", "rate": "effr" },
-        { "type": "fredCsv", "series": "EFFR", "period": "day" }
+        {
+          "type": "nyfed",
+          "rate": "effr"
+        },
+        {
+          "type": "fredCsv",
+          "series": "EFFR",
+          "period": "day"
+        }
       ]
     },
     {
@@ -27,8 +41,16 @@
       "name": "Euro Area House Price Index",
       "category": "MACRO",
       "sources": [
-        { "type": "eurostat", "dataset": "prc_hpi_q", "query": "geo=EA20&unit=I15_Q&purchase=TOTAL" },
-        { "type": "fredCsv", "series": "QXMN628BIS", "period": "quarter" }
+        {
+          "type": "eurostat",
+          "dataset": "prc_hpi_q",
+          "query": "geo=EA20&unit=I15_Q&purchase=TOTAL"
+        },
+        {
+          "type": "fredCsv",
+          "series": "QXMN628BIS",
+          "period": "quarter"
+        }
       ]
     },
     {
@@ -37,8 +59,15 @@
       "name": "US Rent Index (CPI rent of primary residence)",
       "category": "MACRO",
       "sources": [
-        { "type": "bls", "series": "CUUR0000SEHA" },
-        { "type": "fredCsv", "series": "CUUR0000SEHA", "period": "month" }
+        {
+          "type": "bls",
+          "series": "CUUR0000SEHA"
+        },
+        {
+          "type": "fredCsv",
+          "series": "CUUR0000SEHA",
+          "period": "month"
+        }
       ]
     },
     {
@@ -47,8 +76,15 @@
       "name": "US Unemployment Rate",
       "category": "MACRO",
       "sources": [
-        { "type": "bls", "series": "LNS14000000" },
-        { "type": "fredCsv", "series": "UNRATE", "period": "month" }
+        {
+          "type": "bls",
+          "series": "LNS14000000"
+        },
+        {
+          "type": "fredCsv",
+          "series": "UNRATE",
+          "period": "month"
+        }
       ]
     },
     {
@@ -57,8 +93,15 @@
       "name": "US Average Hourly Earnings",
       "category": "MACRO",
       "sources": [
-        { "type": "bls", "series": "CES0500000003" },
-        { "type": "fredCsv", "series": "CES0500000003", "period": "month" }
+        {
+          "type": "bls",
+          "series": "CES0500000003"
+        },
+        {
+          "type": "fredCsv",
+          "series": "CES0500000003",
+          "period": "month"
+        }
       ]
     },
     {
@@ -67,8 +110,15 @@
       "name": "US Regular Gasoline (per gallon)",
       "category": "MACRO",
       "sources": [
-        { "type": "bls", "series": "APU000074714" },
-        { "type": "fredCsv", "series": "APU000074714", "period": "month" }
+        {
+          "type": "bls",
+          "series": "APU000074714"
+        },
+        {
+          "type": "fredCsv",
+          "series": "APU000074714",
+          "period": "month"
+        }
       ]
     },
     {
@@ -77,8 +127,38 @@
       "name": "US Eggs, Grade A Large (per dozen)",
       "category": "MACRO",
       "sources": [
-        { "type": "bls", "series": "APU0000708111" },
-        { "type": "fredCsv", "series": "APU0000708111", "period": "month" }
+        {
+          "type": "bls",
+          "series": "APU0000708111"
+        },
+        {
+          "type": "fredCsv",
+          "series": "APU0000708111",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "assetId": 8,
+      "symbol": "sREDLINE",
+      "name": "AK-47 | Redline (Field-Tested)",
+      "category": "COLLECTIBLE",
+      "sources": [
+        {
+          "type": "skinport",
+          "marketHashName": "AK-47 | Redline (Field-Tested)",
+          "field": "min_price"
+        },
+        {
+          "type": "csgotrader",
+          "market": "csfloat",
+          "marketHashName": "AK-47 | Redline (Field-Tested)"
+        },
+        {
+          "type": "csgotrader",
+          "market": "buff163",
+          "marketHashName": "AK-47 | Redline (Field-Tested)"
+        }
       ]
     }
   ]

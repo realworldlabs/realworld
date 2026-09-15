@@ -117,15 +117,35 @@ const steam: SourceAdapter = async (spec, ctx) => {
   return [{ source: "steam", price: Number(p.replace(/[^0-9.]/g, "")), observedAt: ctx.now(), raw: j }];
 };
 
-/** Skinport public item list. Uses the suggested price. */
+/**
+ * Skinport public item list. `field` picks the figure: "suggested_price" (Skinport's reference, default) or
+ * "min_price" (lowest live listing, comparable with the lowest-ask figures of other cash markets).
+ */
 const skinport: SourceAdapter = async (spec, ctx) => {
   const name = str(spec, "marketHashName");
-  type Item = { market_hash_name: string; suggested_price: number | null; median_price: number | null };
+  const field = (spec.field as string) ?? "suggested_price";
+  type Item = { market_hash_name: string; suggested_price: number | null; median_price: number | null; min_price: number | null };
   const items = await getJson<Item[]>(ctx, "https://api.skinport.com/v1/items?app_id=730&currency=USD");
   const item = items.find((i) => i.market_hash_name === name);
-  const price = item?.suggested_price ?? item?.median_price;
+  const price = (item?.[field as keyof Item] as number | null | undefined) ?? item?.suggested_price ?? item?.median_price;
   if (!price) throw new Error(`skinport ${name}: no price`);
   return [{ source: "skinport", price, observedAt: ctx.now(), raw: item }];
+};
+
+/**
+ * Lowest live ask on a CS2 cash market (buff163, csfloat) as republished by the CSGO Trader price feed.
+ * The feed is a relay, not a market: the two figures come from different exchanges, but through one publisher.
+ */
+const csgotrader: SourceAdapter = async (spec, ctx) => {
+  const name = str(spec, "marketHashName");
+  const market = str(spec, "market");
+  if (!["buff163", "csfloat"].includes(market)) throw new Error(`csgotrader: unsupported market ${market}`);
+  type Entry = { price?: number; starting_at?: { price?: number } | number };
+  const feed = await getJson<Record<string, Entry>>(ctx, `https://prices.csgotrader.app/latest/${market}.json`);
+  const e = feed[name];
+  const ask = typeof e?.starting_at === "number" ? e.starting_at : e?.starting_at?.price ?? e?.price;
+  if (!(typeof ask === "number" && ask > 0)) throw new Error(`csgotrader ${market} ${name}: no price`);
+  return [{ source: `csgotrader:${market}`, price: ask, observedAt: ctx.now(), raw: e }];
 };
 
 /** The Economist Big Mac index CSV (published twice a year). */
@@ -183,6 +203,7 @@ export const ADAPTERS: Record<string, SourceAdapter> = {
   eurostat,
   steam,
   skinport,
+  csgotrader,
   economistBigMac,
   pricecharting,
   attested,
