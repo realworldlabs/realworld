@@ -51,6 +51,91 @@
           "period": "quarter"
         }
       ]
+    },
+    {
+      "assetId": 3,
+      "symbol": "sUSRENT",
+      "name": "US Rent Index (CPI rent of primary residence)",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "bls",
+          "series": "CUUR0000SEHA"
+        },
+        {
+          "type": "fredCsv",
+          "series": "CUUR0000SEHA",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "assetId": 4,
+      "symbol": "sUSJOBS",
+      "name": "US Unemployment Rate",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "bls",
+          "series": "LNS14000000"
+        },
+        {
+          "type": "fredCsv",
+          "series": "UNRATE",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "assetId": 5,
+      "symbol": "sUSWAGE",
+      "name": "US Average Hourly Earnings",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "bls",
+          "series": "CES0500000003"
+        },
+        {
+          "type": "fredCsv",
+          "series": "CES0500000003",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "assetId": 6,
+      "symbol": "sUSGAS",
+      "name": "US Regular Gasoline (per gallon)",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "bls",
+          "series": "APU000074714"
+        },
+        {
+          "type": "fredCsv",
+          "series": "APU000074714",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "assetId": 7,
+      "symbol": "sUSEGGS",
+      "name": "US Eggs, Grade A Large (per dozen)",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "bls",
+          "series": "APU0000708111"
+        },
+        {
+          "type": "fredCsv",
+          "series": "APU0000708111",
+          "period": "month"
+        }
+      ]
     }
   ]
 }
