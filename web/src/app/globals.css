@@ -432,8 +432,9 @@ button {
 
 @media (max-width: 1500px) {
   .featured {
-    grid-template-columns: 1fr 1fr;
-    gap: 14px 24px;
+    grid-template-columns: auto auto auto 1fr;
+    justify-content: start;
+    gap: 14px 36px;
   }
   .featured-seal {
     grid-column: 1 / -1;
@@ -448,15 +449,22 @@ button {
   .featured-lbl {
     justify-content: flex-start;
   }
-  .featured-spark {
-    align-items: flex-start;
-  }
+  .featured-spark,
   .featured-prog {
     align-items: flex-start;
   }
   .featured-actions {
-    grid-column: 1 / -1;
+    justify-self: end;
     flex-wrap: wrap;
+  }
+}
+@media (max-width: 900px) {
+  .featured {
+    grid-template-columns: 1fr 1fr;
+  }
+  .featured-actions {
+    grid-column: 1 / -1;
+    justify-self: start;
   }
 }
 
