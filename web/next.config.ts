@@ -6,7 +6,10 @@ import type { NextConfig } from "next";
 function deployments(): string {
   if (process.env.NEXT_PUBLIC_DEPLOYMENTS) return process.env.NEXT_PUBLIC_DEPLOYMENTS;
   const file = path.resolve(process.env.DEPLOYMENTS_FILE ?? "../contracts/deployments/devnet.json");
-  return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "{}";
+  // A site without addresses cannot trade or launch, so fail the build instead of shipping "{}".
+  // (Vercel hands "sensitive" variables to `vercel build` as the literal "[SENSITIVE]", which trips this.)
+  if (!fs.existsSync(file)) throw new Error(`DEPLOYMENTS_FILE not found: ${file}`);
+  return fs.readFileSync(file, "utf8");
 }
 
 const config: NextConfig = {

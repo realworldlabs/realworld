@@ -1,1 +1,0 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,66604,t=>{"use strict";t.s(["createBaseAccountSDK",0,function(){throw Error("Base Account is not supported in this app")}])}]);
