@@ -3,6 +3,24 @@
   "assets": [
     {
       "assetId": null,
+      "symbol": "sREDLINE",
+      "name": "AK-47 Redline (Field-Tested)",
+      "category": "COLLECTIBLE",
+      "_why": "Steam's median swings 20%+ within hours against Skinport; needs a third marketplace so the median can drop the outlier.",
+      "sources": [
+        {
+          "type": "steam",
+          "marketHashName": "AK-47 | Redline (Field-Tested)",
+          "scale": 0.75
+        },
+        {
+          "type": "skinport",
+          "marketHashName": "AK-47 | Redline (Field-Tested)"
+        }
+      ]
+    },
+    {
+      "assetId": null,
       "symbol": "sBIGMAC",
       "name": "Big Mac (US)",
       "category": "COLLECTIBLE",

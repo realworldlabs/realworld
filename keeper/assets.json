@@ -51,23 +51,6 @@
           "period": "quarter"
         }
       ]
-    },
-    {
-      "assetId": 3,
-      "symbol": "sREDLINE",
-      "name": "AK-47 Redline (Field-Tested)",
-      "category": "COLLECTIBLE",
-      "sources": [
-        {
-          "type": "steam",
-          "marketHashName": "AK-47 | Redline (Field-Tested)",
-          "scale": 0.75
-        },
-        {
-          "type": "skinport",
-          "marketHashName": "AK-47 | Redline (Field-Tested)"
-        }
-      ]
     }
   ]
 }
