@@ -66,12 +66,24 @@ const GLYPHS: Record<string, React.ReactNode> = {
       <path d="M7.5 17.5h17M8 21a8 4.5 0 0 0 16 0z" />
     </>
   ),
-  // a trading card
+  // Charizard: a flame
   sCHARIZARD: (
     <>
-      <rect x="9" y="7" width="14" height="18" rx="1.5" />
-      <path d="M12 11h8M12 21h8" />
-      <circle cx="16" cy="16" r="2" />
+      <path d="M16 7c0 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1.2-3.8 2.5-5 .2 1.8 1 2.8 2 3.2C15.8 12.5 16 10 16 7z" />
+    </>
+  ),
+  // Umbreon VMAX: a crescent moon
+  sMOONBREON: (
+    <>
+      <path d="M19.5 8.5a8 8 0 1 0 4 13.5 7 7 0 0 1-4-13.5z" />
+      <circle cx="21.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+    </>
+  ),
+  // Blastoise: water drops
+  sBLASTOISE: (
+    <>
+      <path d="M13 8.5c2.6 3.4 4 5.6 4 7.6a4 4 0 0 1-8 0c0-2 1.4-4.2 4-7.6z" />
+      <path d="M21 15.5c1.6 2.1 2.5 3.5 2.5 4.8a2.5 2.5 0 0 1-5 0c0-1.3.9-2.7 2.5-4.8z" />
     </>
   ),
   // a CS2 skin: a crosshair
@@ -91,7 +103,7 @@ const GLYPHS: Record<string, React.ReactNode> = {
 };
 
 /** Symbols that share a glyph. */
-const ALIAS: Record<string, string> = { sMOONBREON: "sCHARIZARD", sBLASTOISE: "sCHARIZARD" };
+const ALIAS: Record<string, string> = {};
 
 export function AssetIcon({ symbol, size = 18, className, title }: { symbol: string; size?: number; className?: string; title?: string }) {
   const glyph = GLYPHS[ALIAS[symbol] ?? symbol];
