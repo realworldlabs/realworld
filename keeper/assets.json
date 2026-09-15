@@ -1,4 +1,5 @@
 {
+  "_note": "The full asset list including underlyings not yet on-chain. Seed with ASSETS_FILE=assets.next.json, add them with contracts/script/AddAssets.s.sol, then copy this file over assets.json.",
   "assets": [
     {
       "assetId": 0,
@@ -134,6 +135,29 @@
           "type": "fredCsv",
           "series": "APU0000708111",
           "period": "month"
+        }
+      ]
+    },
+    {
+      "assetId": 8,
+      "symbol": "sREDLINE",
+      "name": "AK-47 | Redline (Field-Tested)",
+      "category": "COLLECTIBLE",
+      "sources": [
+        {
+          "type": "skinport",
+          "marketHashName": "AK-47 | Redline (Field-Tested)",
+          "field": "min_price"
+        },
+        {
+          "type": "csgotrader",
+          "market": "csfloat",
+          "marketHashName": "AK-47 | Redline (Field-Tested)"
+        },
+        {
+          "type": "csgotrader",
+          "market": "buff163",
+          "marketHashName": "AK-47 | Redline (Field-Tested)"
         }
       ]
     }
