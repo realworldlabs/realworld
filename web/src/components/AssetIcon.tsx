@@ -59,6 +59,32 @@ const GLYPHS: Record<string, React.ReactNode> = {
   ),
   // US eggs: an egg
   sUSEGGS: <path d="M16 7.5c3.6 0 6.5 5.2 6.5 10a6.5 6.5 0 0 1-13 0c0-4.8 2.9-10 6.5-10z" />,
+  // US used cars: a car
+  sUSCARS: (
+    <>
+      <path d="M8 18l1.8-5.2A2 2 0 0 1 11.7 11.5h8.6a2 2 0 0 1 1.9 1.3L24 18v4.5H8z" />
+      <path d="M8 18h16M6.5 18H8M24 18h1.5" />
+      <circle cx="11.5" cy="22" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="20.5" cy="22" r="1.6" fill="currentColor" stroke="none" />
+    </>
+  ),
+  // US new cars: a car with a price tag
+  sNEWCARS: (
+    <>
+      <path d="M7 19l1.8-5.2A2 2 0 0 1 10.7 12.5h7.6a2 2 0 0 1 1.9 1.3L22 19v4H7z" />
+      <path d="M7 19h15" />
+      <circle cx="10.5" cy="22.5" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="18.5" cy="22.5" r="1.4" fill="currentColor" stroke="none" />
+      <path d="M21 7.5h4.5v4.5L21 16.5 16.5 12z" />
+    </>
+  ),
+  // US car insurance: a shield
+  sCARINSUR: (
+    <>
+      <path d="M16 7.5l7.5 3v6c0 4.2-3.2 7.2-7.5 8.5-4.3-1.3-7.5-4.3-7.5-8.5v-6z" />
+      <path d="M12.8 16.2l2.2 2.2 4.4-4.6" />
+    </>
+  ),
   // Big Mac index: a burger
   sBIGMAC: (
     <>

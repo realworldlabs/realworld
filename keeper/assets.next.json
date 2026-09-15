@@ -217,6 +217,40 @@
           "grade": "PSA10"
         }
       ]
+    },
+    {
+      "assetId": 12,
+      "symbol": "sUSCARS",
+      "name": "US Used Cars & Trucks Index (CPI)",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "bls",
+          "series": "CUUR0000SETA02"
+        },
+        {
+          "type": "fredCsv",
+          "series": "CUUR0000SETA02",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "assetId": 13,
+      "symbol": "sNEWCARS",
+      "name": "US New Vehicles Index (CPI)",
+      "category": "MACRO",
+      "sources": [
+        {
+          "type": "bls",
+          "series": "CUUR0000SETA01"
+        },
+        {
+          "type": "fredCsv",
+          "series": "CUUR0000SETA01",
+          "period": "month"
+        }
+      ]
     }
   ]
 }
