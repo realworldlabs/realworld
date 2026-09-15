@@ -37,6 +37,8 @@ const envSchema = z.object({
   BUYBACK_VAULT: address.optional(),
   ASSETS_FILE: z.string().default("assets.json"),
   INTERVAL_SEC: z.coerce.number().int().positive().default(300),
+  /** Macro statistics change monthly at most; polling them rarely keeps the keyless BLS tier (25 requests/day) usable. */
+  MACRO_INTERVAL_SEC: z.coerce.number().int().positive().default(6 * 3600),
   DEADBAND_TICKS: z.coerce.number().int().nonnegative().default(25),
   /** Smallest buyback budget worth a transaction, in the pair token's base units. */
   BUYBACK_MIN_BUDGET: z.coerce.bigint().default(1_000_000n),

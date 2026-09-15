@@ -14,8 +14,15 @@ const sources = { fetch: globalThis.fetch, env: process.env, now: () => Date.now
 const launchpad = newLaunchpadState();
 const once = process.argv.includes("--once");
 
+const lastRun = new Map<number, number>();
+
 async function tick() {
   for (const asset of assets) {
+    // Macro sources publish monthly or daily; polling them every tick only burns source quotas.
+    const interval = asset.category === "MACRO" ? env.MACRO_INTERVAL_SEC : env.INTERVAL_SEC;
+    const last = lastRun.get(asset.assetId) ?? 0;
+    if (Date.now() - last < interval * 1000) continue;
+    lastRun.set(asset.assetId, Date.now());
     try {
       await runPriceUpdate(asset, { chain, sources, audit, logger, deadbandTicks: env.DEADBAND_TICKS });
     } catch (e) {
@@ -26,7 +33,7 @@ async function tick() {
   if (env.FACTORY && env.BUYBACK_VAULT) await runBuybacks(chain, launchpad, env.BUYBACK_MIN_BUDGET, logger);
 }
 
-logger.log("info", "keeper started", { assets: assets.map((a) => a.symbol), intervalSec: env.INTERVAL_SEC, once });
+logger.log("info", "keeper started", { assets: assets.map((a) => a.symbol), intervalSec: env.INTERVAL_SEC, macroIntervalSec: env.MACRO_INTERVAL_SEC, once });
 do {
   const started = Date.now();
   await tick();

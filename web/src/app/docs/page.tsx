@@ -37,7 +37,7 @@ export default function DocsPage() {
           blocked. Trading never stops. A guardian can pause price moves and launches, but not trading.
         </p>
 
-        <h2>Launching</h2>
+        <h2 id="launching">Launching</h2>
         <p>
           Pick a name, ticker, image and underlying. Set an optional creator tax (up to 5%) and an optional buyback share. Pay
           the 0.0005 ETH launch fee and, if you want to be first in, a first buy paid in USDG. All of it is fixed at launch.
@@ -47,7 +47,7 @@ export default function DocsPage() {
           a $4,000 opening market cap to about $48,700. The rest is the reserve that seeds the permanent pool.
         </p>
 
-        <h2>Trading and fees</h2>
+        <h2 id="fees">Trading and fees</h2>
         <p>
           Coins trade in a real Uniswap v4 pool from the first block. Every trade pays a <strong>1% base fee</strong>, 70% to the
           creator and 30% to the protocol, plus any creator tax. All fees are taken in the underlying, never in the coin. Creators
@@ -62,7 +62,7 @@ export default function DocsPage() {
           at the graduation price is burned. Trading continues in the same pool with the same fees.
         </p>
 
-        <h2>What can go wrong</h2>
+        <h2 id="risk">What can go wrong</h2>
         <p>
           These are memecoins and most go to zero. A coin priced in an underlying carries that underlying&apos;s risk too: if the
           underlying falls, your coin falls with it. Underlyings depend on a single keeper operator, bounded by on-chain limits,

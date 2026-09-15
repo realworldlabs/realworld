@@ -4,6 +4,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Nav } from "@/components/Nav";
+import { Footer } from "@/components/Footer";
 
 const display = Fraunces({ subsets: ["latin"], weight: "variable", style: ["normal", "italic"], axes: ["opsz"], variable: "--font-fraunces" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-mono" });
@@ -22,15 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <Nav />
           <main>{children}</main>
-          <footer className="footer">
-            <div className="shell" style={{ display: "flex", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
-              <span className="mono">REALWORLD · ROBINHOOD CHAIN</span>
-              <span style={{ maxWidth: 640 }}>
-                Memecoins are volatile and most go to zero. Synthetic underlyings carry keeper and backing risk. Nothing here is
-                investment advice.
-              </span>
-            </div>
-          </footer>
+          <Footer />
         </Providers>
       </body>
     </html>

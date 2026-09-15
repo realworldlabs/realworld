@@ -97,6 +97,31 @@ export function createApi(db: Db) {
     return c.body(await upstream.text(), upstream.status as 200, { "content-type": "application/json" });
   });
 
+  // ---------------------------------------------------------------- image upload
+
+  // Coin images are pinned to IPFS server-side so the Pinata key never reaches the browser.
+  app.post("/upload", async (c) => {
+    if (!config.pinataJwt) return c.json({ error: "uploads are not configured" }, 503);
+    const body = await c.req.parseBody();
+    const file = body["file"];
+    if (!(file instanceof File)) return c.json({ error: "send the image as multipart field \"file\"" }, 400);
+    if (!/^image\/(png|jpeg|gif|webp)$/.test(file.type)) return c.json({ error: "png, jpeg, gif or webp only" }, 415);
+    if (file.size > 2 * 1024 * 1024) return c.json({ error: "image must be 2 MB or smaller" }, 413);
+
+    const form = new FormData();
+    form.append("file", file, file.name || "image");
+    form.append("pinataMetadata", JSON.stringify({ name: `realworld-coin-${Date.now()}` }));
+    const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      method: "POST",
+      headers: { authorization: `Bearer ${config.pinataJwt}` },
+      body: form,
+      signal: AbortSignal.timeout(60_000),
+    });
+    if (!res.ok) return c.json({ error: `pinning failed (${res.status})` }, 502);
+    const { IpfsHash } = (await res.json()) as { IpfsHash: string };
+    return c.json({ uri: `ipfs://${IpfsHash}` });
+  });
+
   // ---------------------------------------------------------------- health
 
   app.get("/health", (c) => c.json({ ok: true, ...status }));

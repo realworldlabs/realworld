@@ -1427,9 +1427,93 @@ a.list-row:hover,
 
 .footer {
   border-top: 1px solid var(--ink);
-  padding: 20px 0 32px;
+  margin-top: 40px;
+  padding: 32px 0 28px;
   color: var(--ink-3);
+  font-size: 12px;
+  background: var(--paper-2);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(4, 1fr);
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.footer-brand .brand {
+  font-size: 20px;
+}
+
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.footer-links a {
+  color: var(--ink-2);
+  transition: color 0.12s;
+}
+
+.footer-links a:hover {
+  color: var(--green);
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-top: 16px;
   font-size: 11px;
+}
+
+.footer-bottom span:last-child {
+  max-width: 640px;
+}
+
+/* image upload on the launch form */
+.upload {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.upload-drop {
+  flex: 1;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--radius);
+  padding: 12px;
+  background: #fffdf7;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.upload-drop:hover,
+.upload-drop[data-active="true"] {
+  border-color: var(--green);
+  background: var(--green-dim);
+}
+
+.upload-drop input {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .footer-brand {
+    grid-column: span 2;
+  }
 }
 
 /* ---------------------------------------------------------------- floating pill nav */

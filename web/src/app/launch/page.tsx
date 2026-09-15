@@ -8,12 +8,82 @@ import { useAccount, useBalance, useConfig, useReadContract } from "wagmi";
 import { getPublicClient, simulateContract } from "wagmi/actions";
 import { CoinAvatar } from "@/components/bits";
 import { useAssets } from "@/lib/api";
-import { deployments, LAUNCH_FEE, USDG_DECIMALS } from "@/lib/config";
+import { deployments, INDEXER_URL, LAUNCH_FEE, USDG_DECIMALS } from "@/lib/config";
 import { bpsToPercent, formatAmount, formatPrice, formatUsd } from "@/lib/format";
 import { useTx } from "@/lib/tx";
 
 const START_MCAP = 4_000;
 const GRAD_MCAP = 48_700;
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+/** Picks an image, pins it through the indexer and stores the ipfs:// reference; a URL can still be pasted. */
+function ImageField({ value, onChange, symbol }: { value: string; onChange: (v: string) => void; symbol: string }) {
+  const [state, setState] = useState<{ status: "idle" } | { status: "uploading" } | { status: "error"; message: string }>({ status: "idle" });
+  const [dragging, setDragging] = useState(false);
+  const [showUrl, setShowUrl] = useState(false);
+
+  async function upload(file: File) {
+    if (!/^image\/(png|jpeg|gif|webp)$/.test(file.type)) return setState({ status: "error", message: "Use a PNG, JPEG, GIF or WebP image." });
+    if (file.size > MAX_IMAGE_BYTES) return setState({ status: "error", message: "Image must be 2 MB or smaller." });
+    setState({ status: "uploading" });
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`${INDEXER_URL}/upload`, { method: "POST", body: form });
+      const body = (await res.json()) as { uri?: string; error?: string };
+      if (!res.ok || !body.uri) throw new Error(body.error ?? `upload failed (${res.status})`);
+      onChange(body.uri);
+      setState({ status: "idle" });
+    } catch (e) {
+      setState({ status: "error", message: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  return (
+    <div className="stack" style={{ gap: 8 }}>
+      <div className="upload">
+        <CoinAvatar coin={{ logo: value, symbol: symbol || "??" }} size={64} />
+        <label
+          className="upload-drop"
+          data-active={dragging}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            const f = e.dataTransfer.files[0];
+            if (f) void upload(f);
+          }}
+        >
+          <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(e) => e.target.files?.[0] && void upload(e.target.files[0])} />
+          <span className="mono" style={{ fontSize: 12 }}>
+            {state.status === "uploading" ? "Pinning to IPFS…" : value ? "Replace image" : "Drop an image or click to choose"}
+          </span>
+          <span className="hint">PNG, JPEG, GIF, WebP · up to 2 MB · square looks best</span>
+        </label>
+      </div>
+      {state.status === "error" && (
+        <div className="status" data-kind="error" style={{ marginTop: 0 }}>
+          {state.message}
+        </div>
+      )}
+      <div className="row" style={{ gap: 12 }}>
+        <button className="hint" style={{ background: "none", border: 0, textDecoration: "underline", padding: 0 }} onClick={() => setShowUrl(!showUrl)}>
+          {showUrl ? "Hide URL field" : "Paste a URL instead"}
+        </button>
+        {value && (
+          <span className="hint mono truncate" style={{ maxWidth: 360 }}>
+            {value}
+          </span>
+        )}
+      </div>
+      {showUrl && <input className="input" value={value} onChange={(e) => onChange(e.target.value)} placeholder="https://… or ipfs://…" />}
+    </div>
+  );
+}
 
 export default function LaunchPage() {
   const router = useRouter();
@@ -132,11 +202,8 @@ export default function LaunchPage() {
                 <input id="symbol" className="input" maxLength={12} value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} placeholder="RENT" />
               </div>
               <div className="field span-2">
-                <label htmlFor="logo" className="label">
-                  Image URL
-                </label>
-                <input id="logo" className="input" value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="https://… or ipfs://…" />
-                <span className="hint">Stored on-chain as a URL. Pin the image to IPFS for permanence.</span>
+                <label className="label">Image</label>
+                <ImageField value={logo} onChange={setLogo} symbol={symbol} />
               </div>
               <div className="field span-2">
                 <label htmlFor="desc" className="label">

@@ -2,14 +2,11 @@
 
 import { useState } from "react";
 import type { Asset, Coin } from "@/lib/api";
+import { imageUrl } from "@/lib/config";
 
-/** Renders logos from http(s) or ipfs:// URLs; falls back to the ticker initials on an amber block. */
+/** Renders logos from http(s) or ipfs:// URLs; falls back to the ticker initials on an ink block. */
 export function CoinAvatar({ coin, size = 30 }: { coin: Pick<Coin, "logo" | "symbol">; size?: number }) {
-  const src = coin.logo?.startsWith("ipfs://")
-    ? `https://ipfs.io/ipfs/${coin.logo.slice(7)}`
-    : coin.logo?.startsWith("http")
-      ? coin.logo
-      : undefined;
+  const src = imageUrl(coin.logo);
   const [failed, setFailed] = useState(false);
   return (
     <span className="avatar" style={{ width: size, height: size, fontSize: size * 0.42 }}>
@@ -25,11 +22,7 @@ export function CoinAvatar({ coin, size = 30 }: { coin: Pick<Coin, "logo" | "sym
 
 /** Square card artwork: the coin's image, or an engraved placeholder with the ticker set in serif. */
 export function CoinArt({ coin }: { coin: Pick<Coin, "logo" | "symbol"> }) {
-  const src = coin.logo?.startsWith("ipfs://")
-    ? `https://ipfs.io/ipfs/${coin.logo.slice(7)}`
-    : coin.logo?.startsWith("http")
-      ? coin.logo
-      : undefined;
+  const src = imageUrl(coin.logo);
   const [failed, setFailed] = useState(false);
   if (src && !failed) {
     // eslint-disable-next-line @next/next/no-img-element

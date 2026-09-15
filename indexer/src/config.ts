@@ -37,4 +37,6 @@ export const config = {
   /** Blocks behind the head to treat as settled (Orbit chains do not reorg in practice). */
   confirmations: Number(env.CONFIRMATIONS ?? 2),
   port: Number(env.PORT ?? 42069),
+  /** Pinata JWT for coin image uploads (POST /upload). Uploads are disabled without it. */
+  pinataJwt: env.PINATA_JWT,
 };
