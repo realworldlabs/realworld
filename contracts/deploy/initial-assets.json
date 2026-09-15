@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-14T18:58:45.364Z",
+  "generatedAt": "2026-09-15T05:35:47.893Z",
   "assets": [
     {
       "name": "US CPI-U Index",
@@ -24,14 +24,6 @@
       "unitScale": "1000000000000000000",
       "priceX18": "157359400000000000000",
       "metadataURI": "sources:eurostat:prc_hpi_q,fredCsv:QXMN628BIS"
-    },
-    {
-      "name": "AK-47 Redline (Field-Tested)",
-      "symbol": "sREDLINE",
-      "category": 1,
-      "unitScale": "1000000000000000000",
-      "priceX18": "33937750000000000000",
-      "metadataURI": "sources:steam:AK-47 | Redline (Field-Tested),skinport:AK-47 | Redline (Field-Tested)"
     }
   ]
 }
