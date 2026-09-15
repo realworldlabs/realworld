@@ -129,7 +129,7 @@ const GLYPHS: Record<string, React.ReactNode> = {
 };
 
 /** Symbols that share a glyph. */
-const ALIAS: Record<string, string> = {};
+const ALIAS: Record<string, string> = { sCAMRY: "sUSCARS", sCIVIC: "sUSCARS", sF150: "sUSCARS", sMODEL3: "sUSCARS", sMIATA: "sUSCARS" };
 
 export function AssetIcon({ symbol, size = 18, className, title }: { symbol: string; size?: number; className?: string; title?: string }) {
   const glyph = GLYPHS[ALIAS[symbol] ?? symbol];

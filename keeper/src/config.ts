@@ -15,6 +15,8 @@ const assetSchema = z.object({
   /** Token price = source price x unitScale (e.g. 0.001 when one token is 1/1000 of a card). */
   unitScale: z.number().positive().default(1),
   sources: z.array(sourceSpec).min(1),
+  /** Seconds between readings of this asset; overrides the category default (source quotas). */
+  intervalSec: z.number().int().positive().optional(),
   rules: z
     .object({ agreementBps: z.number().positive(), minSources: z.number().int().positive(), maxAgeMs: z.number().positive() })
     .partial()

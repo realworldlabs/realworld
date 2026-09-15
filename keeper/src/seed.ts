@@ -28,7 +28,7 @@ for (const [i, asset] of assets.entries()) {
     // Decimal strings: forge parses them exactly, JSON numbers would lose precision.
     unitScale: BigInt(Math.round(asset.unitScale * 1e6)) * 10n ** 12n + "",
     priceX18: BigInt(Math.round(price * 1e6)) * 10n ** 12n + "",
-    metadataURI: `sources:${asset.sources.map((s) => `${s.type}:${s.series ?? s.rate ?? s.dataset ?? s.marketHashName ?? s.iso ?? s.slug ?? s.id ?? ""}`).join(",")}`,
+    metadataURI: `sources:${asset.sources.map((s) => `${s.type}:${s.series ?? s.rate ?? s.dataset ?? s.marketHashName ?? s.iso ?? s.slug ?? (s.model ? `${s.year} ${s.make} ${s.model}` : undefined) ?? s.id ?? ""}`).join(",")}`,
   });
   console.log(`${asset.symbol.padEnd(11)} $${price}${r.period ? ` (${r.period})` : ""}`);
 }

@@ -101,3 +101,11 @@ describe("pokemonprice", () => {
     expect(() => parsePokemonPrice(html, "BGS10")).toThrow(/no BGS10/);
   });
 });
+
+describe("medianOf", () => {
+  it("takes the middle value, averaging an even split", async () => {
+    const { medianOf } = await import("../src/sources/index.ts");
+    expect(medianOf([30, 10, 20])).toBe(20);
+    expect(medianOf([1, 2, 3, 100])).toBe(2.5);
+  });
+});

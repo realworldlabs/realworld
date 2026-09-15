@@ -202,6 +202,34 @@ const pokemonprice: SourceAdapter = async (spec, ctx) => {
   return [{ source: `pokemonprice:${grade}`, price: parsePokemonPrice(html, grade), observedAt: ctx.now(), raw: { slug, grade } }];
 };
 
+/**
+ * Auto.dev listings API (AUTODEV_KEY; free tier 1,000 calls a month, 20 rows a page). One call per reading: the
+ * median asking price of the most recently updated priced listings for a make/model/year, optionally bounded by
+ * mileage so the sample stays comparable. Single publisher: assets on it must say so in their rules and metadata.
+ */
+export function medianOf(values: number[]): number {
+  const v = [...values].sort((a, b) => a - b);
+  if (v.length === 0) throw new Error("median of nothing");
+  const mid = Math.floor(v.length / 2);
+  return v.length % 2 ? v[mid]! : (v[mid - 1]! + v[mid]!) / 2;
+}
+
+const autodev: SourceAdapter = async (spec, ctx) => {
+  const make = str(spec, "make");
+  const model = str(spec, "model");
+  const year = str(spec, "year");
+  const key = ctx.env.AUTODEV_KEY;
+  if (!key) throw new Error("autodev: AUTODEV_KEY not set");
+  const q = new URLSearchParams({ "vehicle.make": make, "vehicle.model": model, "vehicle.year": year, limit: "20", select: "retailListing.price,retailListing.miles" });
+  if (typeof spec.miles === "string") q.set("retailListing.miles", spec.miles);
+  if (typeof spec.trim === "string") q.set("vehicle.trim", spec.trim);
+  type Resp = { data?: Record<string, unknown>[] };
+  const j = await getJson<Resp>(ctx, `https://api.auto.dev/listings?${q}`, { headers: { authorization: `Bearer ${key}` } });
+  const prices = (j.data ?? []).map((r) => Number(r["retailListing.price"])).filter((p) => Number.isFinite(p) && p > 500);
+  if (prices.length < 5) throw new Error(`autodev ${year} ${make} ${model}: only ${prices.length} priced listings`);
+  return [{ source: "autodev", price: medianOf(prices), observedAt: ctx.now(), raw: { make, model, year, sample: prices.length, prices } }];
+};
+
 /** PriceCharting product API (paid token). Prices are in cents. */
 const pricecharting: SourceAdapter = async (spec, ctx) => {
   const id = str(spec, "id");
@@ -234,6 +262,7 @@ export const ADAPTERS: Record<string, SourceAdapter> = {
   csgotrader,
   economistBigMac,
   pokemonprice,
+  autodev,
   pricecharting,
   attested,
 };

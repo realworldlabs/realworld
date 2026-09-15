@@ -19,7 +19,7 @@ const lastRun = new Map<number, number>();
 async function tick() {
   for (const asset of assets) {
     // Macro sources publish monthly or daily; polling them every tick only burns source quotas.
-    const interval = asset.category === "MACRO" ? env.MACRO_INTERVAL_SEC : env.INTERVAL_SEC;
+    const interval = asset.intervalSec ?? (asset.category === "MACRO" ? env.MACRO_INTERVAL_SEC : env.INTERVAL_SEC);
     const last = lastRun.get(asset.assetId) ?? 0;
     if (Date.now() - last < interval * 1000) continue;
     lastRun.set(asset.assetId, Date.now());
