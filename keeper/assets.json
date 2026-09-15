@@ -160,6 +160,63 @@
           "marketHashName": "AK-47 | Redline (Field-Tested)"
         }
       ]
+    },
+    {
+      "assetId": 9,
+      "symbol": "sCHARIZARD",
+      "name": "Charizard Base Set 1st Edition PSA 9 (1/1000 card)",
+      "category": "COLLECTIBLE",
+      "unitScale": 0.001,
+      "rules": {
+        "agreementBps": 1000,
+        "minSources": 1,
+        "maxAgeMs": 21600000
+      },
+      "sources": [
+        {
+          "type": "pokemonprice",
+          "slug": "base-set-1st-edition/charizard-4-holo-1st-edition",
+          "grade": "PSA9"
+        }
+      ]
+    },
+    {
+      "assetId": 10,
+      "symbol": "sMOONBREON",
+      "name": "Umbreon VMAX Alt Art PSA 10 (1/100 card)",
+      "category": "COLLECTIBLE",
+      "unitScale": 0.01,
+      "rules": {
+        "agreementBps": 1000,
+        "minSources": 1,
+        "maxAgeMs": 21600000
+      },
+      "sources": [
+        {
+          "type": "pokemonprice",
+          "slug": "evolving-skies/umbreon-vmax-215",
+          "grade": "PSA10"
+        }
+      ]
+    },
+    {
+      "assetId": 11,
+      "symbol": "sBLASTOISE",
+      "name": "Blastoise Base Set Unlimited PSA 10 (1/100 card)",
+      "category": "COLLECTIBLE",
+      "unitScale": 0.01,
+      "rules": {
+        "agreementBps": 1000,
+        "minSources": 1,
+        "maxAgeMs": 21600000
+      },
+      "sources": [
+        {
+          "type": "pokemonprice",
+          "slug": "base-set-unlimited/blastoise-2-holo",
+          "grade": "PSA10"
+        }
+      ]
     }
   ]
 }
