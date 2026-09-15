@@ -9,37 +9,39 @@ import { useHealth } from "@/lib/api";
 import { DEVNET } from "@/lib/config";
 
 const LINKS = [
-  { href: "/", label: "Board" },
-  { href: "/launch", label: "Launch" },
+  { href: "/", label: "Explore" },
+  { href: "/launch", label: "Create" },
   { href: "/assets", label: "Underlyings" },
   { href: "/portfolio", label: "Portfolio" },
-  { href: "/docs", label: "How it works" },
+  { href: "/docs", label: "Rules" },
 ];
 
 export function Nav() {
   const pathname = usePathname();
   return (
     <header className="nav">
-      <div className="shell nav-inner">
+      <div className="shell nav-grid">
         <Link href="/" className="brand" aria-label="RealWorld home">
           <span className="brand-mark">R</span>
-          REALWORLD
+          RealWorld
         </Link>
-        <nav className="nav-links">
+        <nav className="nav-pill">
           {LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               className="nav-link"
-              data-active={l.href === "/" ? pathname === "/" : pathname.startsWith(l.href)}
+              data-active={l.href === "/" ? pathname === "/" || pathname.startsWith("/coin") : pathname.startsWith(l.href) || (l.href === "/assets" && pathname.startsWith("/asset"))}
             >
               {l.label}
             </Link>
           ))}
         </nav>
-        <ChainStatus />
-        {DEVNET && <DevnetConnect />}
-        <ConnectButton chainStatus="none" showBalance={false} accountStatus="address" />
+        <div className="nav-side">
+          <ChainStatus />
+          {DEVNET && <DevnetConnect />}
+          <ConnectButton chainStatus="none" showBalance={false} accountStatus="address" />
+        </div>
       </div>
     </header>
   );

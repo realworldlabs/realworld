@@ -23,6 +23,27 @@ export function CoinAvatar({ coin, size = 30 }: { coin: Pick<Coin, "logo" | "sym
   );
 }
 
+/** Square card artwork: the coin's image, or an engraved placeholder with the ticker set in serif. */
+export function CoinArt({ coin }: { coin: Pick<Coin, "logo" | "symbol"> }) {
+  const src = coin.logo?.startsWith("ipfs://")
+    ? `https://ipfs.io/ipfs/${coin.logo.slice(7)}`
+    : coin.logo?.startsWith("http")
+      ? coin.logo
+      : undefined;
+  const [failed, setFailed] = useState(false);
+  if (src && !failed) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt="" onError={() => setFailed(true)} />;
+  }
+  const tone = (coin.symbol.charCodeAt(0) + coin.symbol.length) % 4;
+  const n = coin.symbol.length;
+  return (
+    <div className="card-art" data-tone={tone} style={{ fontSize: n <= 4 ? "3.4em" : n <= 6 ? "2.6em" : n <= 8 ? "2em" : "1.5em" }}>
+      {coin.symbol}
+    </div>
+  );
+}
+
 /** Thin curve-progress bar. */
 export function CurveBar({ progress, graduated, width }: { progress: number; graduated: boolean; width?: number }) {
   const pct = graduated ? 100 : Math.max(0, Math.min(100, progress * 100));
