@@ -1,10 +1,14 @@
 export default function DocsPage() {
   return (
     <div className="shell page">
-      <div className="eyebrow">How it works</div>
-      <h1 className="display" style={{ fontSize: "clamp(56px, 8vw, 110px)", margin: "10px 0 0" }}>
-        The rules <span className="amber">of the floor</span>
-      </h1>
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">How it works</div>
+          <h1 className="display page-title">
+            The rules <span className="amber">of the floor</span>
+          </h1>
+        </div>
+      </div>
       <div className="prose">
         <h2>What this is</h2>
         <p>

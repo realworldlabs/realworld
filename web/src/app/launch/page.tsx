@@ -34,12 +34,7 @@ export default function LaunchPage() {
   const [buybackBps, setBuybackBps] = useState(0);
   const [firstBuy, setFirstBuy] = useState("");
 
-  const { data: configHash } = useReadContract({
-    address: deployments.launchFactory,
-    abi: launchFactoryAbi,
-    functionName: "configHash",
-    args: [0n],
-  });
+  const { data: configHash } = useReadContract({ address: deployments.launchFactory, abi: launchFactoryAbi, functionName: "configHash", args: [0n] });
   const { data: ethBalance } = useBalance({ address });
 
   const launchable = (assets ?? []).filter((a) => !a.paused);
@@ -55,10 +50,8 @@ export default function LaunchPage() {
     return usd / (START_MCAP / 1e9);
   }, [firstBuy, taxBps]);
 
-  const errors = [
-    !name.trim() && "Name",
-    !/^[A-Z0-9]{2,12}$/.test(symbol) && "Ticker (2-12 letters/digits)",
-  ].filter(Boolean) as string[];
+  const errors = [!name.trim() && "name", !/^[A-Z0-9]{2,12}$/.test(symbol) && "ticker (2-12 letters/digits)"].filter(Boolean) as string[];
+  const lowEth = (ethBalance?.value ?? 0n) < LAUNCH_FEE;
 
   async function submit() {
     const salt = toHex(crypto.getRandomValues(new Uint8Array(32)));
@@ -101,102 +94,148 @@ export default function LaunchPage() {
 
   return (
     <div className="shell page">
-      <div className="eyebrow">New listing</div>
-      <h1 className="display" style={{ fontSize: "clamp(56px, 8vw, 110px)", margin: "10px 0 28px" }}>
-        List a coin <span className="amber">on the board</span>
-      </h1>
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">New listing</div>
+          <h1 className="display page-title">
+            List a coin <span className="amber">on the board</span>
+          </h1>
+        </div>
+        <p className="hint" style={{ maxWidth: 520, margin: 0 }}>
+          One transaction. 1B supply, 714M sold on a 25,000-tick curve from a $4K opening market cap; graduates near $48.7K into
+          permanently locked liquidity. Terms are fixed at launch.
+        </p>
+      </div>
 
       <div className="coin-layout">
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <section className="panel" style={{ padding: 22 }}>
-            <div className="eyebrow" style={{ marginBottom: 16 }}>
-              01 · Identity
+        <div className="stack">
+          <section className="panel">
+            <div className="panel-head">
+              <span className="section-head" style={{ margin: 0 }}>
+                <span className="step-no">1</span>
+                <span className="eyebrow" style={{ color: "var(--fg)" }}>
+                  Identity
+                </span>
+              </span>
             </div>
-            <div className="form-grid">
+            <div className="panel-body form-grid">
               <div className="field">
-                <label htmlFor="name">Name</label>
+                <label htmlFor="name" className="label">
+                  Name
+                </label>
                 <input id="name" className="input" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} placeholder="Rent Is Due" />
               </div>
               <div className="field">
-                <label htmlFor="symbol">Ticker</label>
-                <input
-                  id="symbol"
-                  className="input mono"
-                  maxLength={12}
-                  value={symbol}
-                  onChange={(e) => setSymbol(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-                  placeholder="RENT"
-                />
+                <label htmlFor="symbol" className="label">
+                  Ticker
+                </label>
+                <input id="symbol" className="input" maxLength={12} value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} placeholder="RENT" />
               </div>
               <div className="field span-2">
-                <label htmlFor="logo">Image URL</label>
+                <label htmlFor="logo" className="label">
+                  Image URL
+                </label>
                 <input id="logo" className="input" value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="https://… or ipfs://…" />
                 <span className="hint">Stored on-chain as a URL. Pin the image to IPFS for permanence.</span>
               </div>
               <div className="field span-2">
-                <label htmlFor="desc">Description</label>
+                <label htmlFor="desc" className="label">
+                  Description
+                </label>
                 <textarea id="desc" className="textarea" maxLength={500} value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
               <div className="field">
-                <label htmlFor="tw">X / Twitter</label>
+                <label htmlFor="tw" className="label">
+                  X / Twitter
+                </label>
                 <input id="tw" className="input" value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="@handle" />
               </div>
               <div className="field">
-                <label htmlFor="tg">Telegram</label>
+                <label htmlFor="tg" className="label">
+                  Telegram
+                </label>
                 <input id="tg" className="input" value={telegram} onChange={(e) => setTelegram(e.target.value)} placeholder="t.me/…" />
               </div>
               <div className="field span-2">
-                <label htmlFor="web">Website</label>
+                <label htmlFor="web" className="label">
+                  Website
+                </label>
                 <input id="web" className="input" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" />
               </div>
             </div>
           </section>
 
-          <section className="panel" style={{ padding: 22 }}>
-            <div className="eyebrow" style={{ marginBottom: 6 }}>
-              02 · Underlying
-            </div>
-            <p className="hint" style={{ marginTop: 0, marginBottom: 16 }}>
-              The coin is priced, traded and pays its fees in this asset. It cannot be changed later.
-            </p>
-            <div className="pair-options">
-              {launchable.map((a) => (
-                <button key={a.assetId} className="pair-option" data-active={pair === a.token} onClick={() => setPair(a.token)}>
-                  <span className="display" style={{ fontSize: 22, textTransform: "none" }}>
-                    {a.symbol}
-                  </span>
-                  <span className="hint">{a.name}</span>
-                  <span className="mono amber">${formatPrice(a.priceUsd)}</span>
-                </button>
-              ))}
-              <button className="pair-option" data-active={pair === ""} onClick={() => setPair("")}>
-                <span className="display" style={{ fontSize: 22 }}>
-                  USDG
+          <section className="panel">
+            <div className="panel-head">
+              <span className="section-head" style={{ margin: 0 }}>
+                <span className="step-no">2</span>
+                <span className="eyebrow" style={{ color: "var(--fg)" }}>
+                  Underlying
                 </span>
-                <span className="hint">Plain dollars, no underlying</span>
-                <span className="mono amber">$1.00</span>
-              </button>
+              </span>
+              <span className="hint">Priced, traded and fee-paid in this asset. Cannot change later.</span>
+            </div>
+            <div className="panel-body">
+              <div className="pair-options">
+                {launchable.map((a) => (
+                  <button key={a.assetId} className="pair-option" data-active={pair === a.token} onClick={() => setPair(a.token)}>
+                    <span className="mono" style={{ fontSize: 14, color: "var(--fg)" }}>
+                      {a.symbol}
+                    </span>
+                    <span className="hint truncate">{a.name}</span>
+                    <span className="mono amber" style={{ fontSize: 12 }}>
+                      ${formatPrice(a.priceUsd)}
+                    </span>
+                  </button>
+                ))}
+                <button className="pair-option" data-active={pair === ""} onClick={() => setPair("")}>
+                  <span className="mono" style={{ fontSize: 14, color: "var(--fg)" }}>
+                    USDG
+                  </span>
+                  <span className="hint">Plain dollars · tradable anywhere</span>
+                  <span className="mono amber" style={{ fontSize: 12 }}>
+                    $1.00
+                  </span>
+                </button>
+              </div>
+              {selected && (
+                <p className="hint" style={{ margin: "10px 0 0" }}>
+                  Coins paired with {selected.symbol} are bought and sold on RealWorld. External terminals cannot route {selected.symbol} back to USDG.
+                </p>
+              )}
             </div>
           </section>
 
-          <section className="panel" style={{ padding: 22 }}>
-            <div className="eyebrow" style={{ marginBottom: 16 }}>
-              03 · Economics (fixed at launch)
+          <section className="panel">
+            <div className="panel-head">
+              <span className="section-head" style={{ margin: 0 }}>
+                <span className="step-no">3</span>
+                <span className="eyebrow" style={{ color: "var(--fg)" }}>
+                  Economics
+                </span>
+              </span>
+              <span className="hint">Fixed at launch.</span>
             </div>
-            <div className="form-grid">
+            <div className="panel-body form-grid">
               <div className="field">
-                <label htmlFor="tax">Creator tax · {bpsToPercent(taxBps)}</label>
+                <label htmlFor="tax" className="label">
+                  Creator tax · <span className="amber">{bpsToPercent(taxBps)}</span>
+                </label>
                 <input id="tax" type="range" className="range" min={0} max={500} step={25} value={taxBps} onChange={(e) => setTaxBps(Number(e.target.value))} />
                 <span className="hint">On top of the 1% base fee (70% of which is yours). Max 5%.</span>
               </div>
               <div className="field">
-                <label htmlFor="bb">Buyback · {bpsToPercent(buybackBps)} of your fees</label>
+                <label htmlFor="bb" className="label">
+                  Buyback · <span className="amber">{bpsToPercent(buybackBps)}</span> of your fees
+                </label>
                 <input id="bb" type="range" className="range" min={0} max={10_000} step={500} value={buybackBps} onChange={(e) => setBuybackBps(Number(e.target.value))} />
                 <span className="hint">Spent buying your coin back, vested to you over 12 months.</span>
               </div>
               <div className="field span-2">
-                <label htmlFor="fb">First buy · USDG (optional)</label>
-                <input id="fb" className="input mono" inputMode="decimal" placeholder="0" value={firstBuy} onChange={(e) => setFirstBuy(e.target.value.replace(/[^0-9.]/g, ""))} />
+                <label htmlFor="fb" className="label">
+                  First buy · USDG <span className="mute">(optional)</span>
+                </label>
+                <input id="fb" className="input" inputMode="decimal" placeholder="0" value={firstBuy} onChange={(e) => setFirstBuy(e.target.value.replace(/[^0-9.]/g, ""))} />
                 <span className="hint">
                   Buy the first tokens in the same transaction, before anyone else. Leave empty to open the curve untouched.
                   {selected ? ` Converted to ${selected.symbol} at its wall price.` : ""}
@@ -206,72 +245,77 @@ export default function LaunchPage() {
           </section>
         </div>
 
-        <aside className="ticket">
-          <div className="ticket-head">
-            <span className="display" style={{ fontSize: 28 }}>
-              Listing slip
-            </span>
-            <span className="mono" style={{ fontSize: 11 }}>
+        <aside className="ticket panel">
+          <div className="panel-head">
+            <span className="eyebrow">Listing slip</span>
+            <span className="mono mute" style={{ fontSize: 10.5 }}>
               CONFIG #0
             </span>
           </div>
-          <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 16 }}>
-            <CoinAvatar coin={{ logo, symbol: symbol || "??" }} size={56} />
-            <div>
-              <div className="display" style={{ fontSize: 34 }}>
-                ${symbol || "TICKER"}
+          <div className="panel-body stack">
+            <div className="row" style={{ gap: 12 }}>
+              <CoinAvatar coin={{ logo, symbol: symbol || "??" }} size={44} />
+              <div style={{ minWidth: 0 }}>
+                <div className="coin-title">${symbol || "TICKER"}</div>
+                <div className="dim truncate" style={{ fontSize: 12 }}>
+                  {name || "Coin name"}
+                </div>
               </div>
-              <div style={{ color: "var(--ink-dim)" }}>{name || "Coin name"}</div>
             </div>
-          </div>
-          <div className="ticket-row">
-            <span>Underlying</span>
-            <strong>{selected?.symbol ?? "USDG"}</strong>
-          </div>
-          <div className="ticket-row">
-            <span>Supply</span>
-            <span>1,000,000,000</span>
-          </div>
-          <div className="ticket-row">
-            <span>Opening market cap</span>
-            <span>{formatUsd(START_MCAP)}</span>
-          </div>
-          <div className="ticket-row">
-            <span>Graduation market cap</span>
-            <span>~{formatUsd(GRAD_MCAP, { compact: true })}</span>
-          </div>
-          <div className="ticket-row">
-            <span>Trade fee</span>
-            <span>{bpsToPercent(100 + taxBps)}</span>
-          </div>
-          <div className="ticket-row">
-            <span>First buy ≈</span>
-            <span>{firstBuyRaw > 0n ? `${formatAmount(BigInt(Math.floor(estTokens)), 0)} tokens` : "none"}</span>
-          </div>
-          <div className="ticket-row">
-            <span>Launch fee</span>
-            <span>0.0005 ETH</span>
-          </div>
+            <div>
+              <div className="ticket-row">
+                <span>Underlying</span>
+                <strong>{selected?.symbol ?? "USDG"}</strong>
+              </div>
+              <div className="ticket-row">
+                <span>Supply</span>
+                <span className="v">1,000,000,000</span>
+              </div>
+              <div className="ticket-row">
+                <span>Opening market cap</span>
+                <span className="v">{formatUsd(START_MCAP)}</span>
+              </div>
+              <div className="ticket-row">
+                <span>Graduation</span>
+                <span className="v">~{formatUsd(GRAD_MCAP, { compact: true })}</span>
+              </div>
+              <div className="ticket-row">
+                <span>Trade fee</span>
+                <span className="v">{bpsToPercent(100 + taxBps)}</span>
+              </div>
+              <div className="ticket-row">
+                <span>Buyback</span>
+                <span className="v">{buybackBps ? bpsToPercent(buybackBps) : "off"}</span>
+              </div>
+              <div className="ticket-row">
+                <span>First buy ≈</span>
+                <span className="v">{firstBuyRaw > 0n ? `${formatAmount(BigInt(Math.floor(estTokens)), 0)} tokens` : "none"}</span>
+              </div>
+              <div className="ticket-row">
+                <span>Launch fee</span>
+                <span className="v">0.0005 ETH</span>
+              </div>
+            </div>
 
-          <button
-            className="btn btn-ink btn-block"
-            style={{ height: 52, marginTop: 18, fontSize: 14 }}
-            disabled={!address || errors.length > 0 || !configHash || tx.state.status === "pending" || (ethBalance?.value ?? 0n) < LAUNCH_FEE}
-            onClick={submit}
-          >
-            {!address ? "Connect a wallet" : tx.state.status === "pending" ? tx.state.label : `Launch $${symbol || "…"}`}
-          </button>
-          {address && errors.length > 0 && <div className="status">Missing: {errors.join(", ")}</div>}
-          {tx.state.status === "error" && (
-            <div className="status" data-kind="error">
-              {tx.state.message}
-            </div>
-          )}
-          {tx.state.status === "success" && (
-            <div className="status" data-kind="success">
-              Listed. Opening the coin page…
-            </div>
-          )}
+            <button
+              className="btn btn-amber btn-lg btn-block"
+              disabled={!address || errors.length > 0 || !configHash || tx.state.status === "pending" || lowEth}
+              onClick={submit}
+            >
+              {!address ? "Connect a wallet" : lowEth ? "Need 0.0005 ETH + gas" : tx.state.status === "pending" ? tx.state.label : `Launch $${symbol || "…"}`}
+            </button>
+            {address && errors.length > 0 && <div className="hint">Missing: {errors.join(", ")}</div>}
+            {tx.state.status === "error" && (
+              <div className="status" data-kind="error" style={{ marginTop: 0 }}>
+                {tx.state.message}
+              </div>
+            )}
+            {tx.state.status === "success" && (
+              <div className="status" data-kind="success" style={{ marginTop: 0 }}>
+                Listed. Opening the coin page…
+              </div>
+            )}
+          </div>
         </aside>
       </div>
     </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useAccount, useConnect } from "wagmi";
+import { useHealth } from "@/lib/api";
 import { DEVNET } from "@/lib/config";
 
 const LINKS = [
@@ -36,10 +37,25 @@ export function Nav() {
             </Link>
           ))}
         </nav>
+        <ChainStatus />
         {DEVNET && <DevnetConnect />}
         <ConnectButton chainStatus="none" showBalance={false} accountStatus="address" />
       </div>
     </header>
+  );
+}
+
+/** Indexer block height against the chain head: the one number that says whether what you see is current. */
+function ChainStatus() {
+  const { data, isError } = useHealth();
+  const lag = data ? data.headBlock - data.lastBlock : 0;
+  const state = isError || !data ? "down" : lag > 200 ? "lag" : "ok";
+  return (
+    <span className="nav-status" title={data ? `indexed ${data.lastBlock.toLocaleString()} / head ${data.headBlock.toLocaleString()}` : "indexer unreachable"}>
+      <span className="dot" data-state={state} />
+      {DEVNET ? "DEVNET" : "RH CHAIN"}
+      <span className="mute">{data ? `#${data.lastBlock.toLocaleString("en-US")}` : "—"}</span>
+    </span>
   );
 }
 
@@ -54,7 +70,7 @@ function DevnetConnect() {
   }, [mock, isReconnecting]);
   if (isConnected || !mock) return null;
   return (
-    <button className="btn" onClick={() => connect({ connector: mock })}>
+    <button className="btn btn-sm" onClick={() => connect({ connector: mock })}>
       Devnet wallet
     </button>
   );

@@ -17,6 +17,10 @@ export interface Asset {
   paused: boolean;
   pot: string;
   launches: number;
+  /** Fraction, e.g. 0.031 for +3.1%; null when there is no baseline yet. */
+  change24h: number | null;
+  /** Wall price history (opening price plus keeper moves), oldest first. */
+  history: { t: number; p: number }[];
 }
 
 export interface AssetPrice {
@@ -56,6 +60,10 @@ export interface Coin {
   lastTradeAt: number;
   holders: number;
   asset: Asset | null;
+  change24h: number | null;
+  volume24h: number;
+  /** Hourly closes over the last day, oldest first. */
+  spark: number[];
 }
 
 export interface CoinDetail extends Coin {
@@ -74,6 +82,12 @@ export interface Trade {
   valueUsd: number;
   timestamp: number;
   txHash: Hex;
+}
+
+export interface TapeTrade extends Trade {
+  symbol: string;
+  logo: string;
+  assetId: number | null;
 }
 
 export interface Candle {
@@ -97,6 +111,19 @@ export interface Stats {
   graduated: number;
   volumeUsd: number;
   assets: number;
+  volume24h: number;
+  trades24h: number;
+  launches24h: number;
+  lastBlock: number;
+  headBlock: number;
+}
+
+export interface Health {
+  ok: boolean;
+  lastBlock: number;
+  headBlock: number;
+  ready: boolean;
+  lastError?: string;
 }
 
 async function get<T>(path: string): Promise<T> {
@@ -108,6 +135,7 @@ async function get<T>(path: string): Promise<T> {
 const LIVE = { refetchInterval: 5_000 } as const;
 
 export const useStats = () => useQuery({ queryKey: ["stats"], queryFn: () => get<Stats>("/stats"), ...LIVE });
+export const useHealth = () => useQuery({ queryKey: ["health"], queryFn: () => get<Health>("/health"), refetchInterval: 10_000 });
 export const useAssets = () => useQuery({ queryKey: ["assets"], queryFn: () => get<Asset[]>("/assets"), ...LIVE });
 export const useAsset = (id: number) =>
   useQuery({ queryKey: ["asset", id], queryFn: () => get<Asset & { prices: AssetPrice[] }>(`/assets/${id}`), ...LIVE });
@@ -120,7 +148,8 @@ export function useCoins(params: Record<string, string | undefined>) {
 export const useCoin = (token: string) =>
   useQuery({ queryKey: ["coin", token], queryFn: () => get<CoinDetail>(`/coins/${token}`), ...LIVE });
 export const useTrades = (token: string) =>
-  useQuery({ queryKey: ["trades", token], queryFn: () => get<Trade[]>(`/coins/${token}/trades?limit=40`), ...LIVE });
+  useQuery({ queryKey: ["trades", token], queryFn: () => get<Trade[]>(`/coins/${token}/trades?limit=60`), ...LIVE });
+export const useTape = () => useQuery({ queryKey: ["tape"], queryFn: () => get<TapeTrade[]>("/trades?limit=40"), ...LIVE });
 export const useCandles = (token: string, interval: number) =>
   useQuery({
     queryKey: ["candles", token, interval],

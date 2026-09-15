@@ -26,10 +26,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main>{children}</main>
           <footer className="footer">
             <div className="shell" style={{ display: "flex", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
-              <span className="mono">REALWORLD · ROBINHOOD CHAIN</span>
-              <span>
-                Memecoins are volatile and most go to zero. Synthetic assets carry keeper and redemption risk. Nothing here is
-                investment advice.
+              <span className="mono">REALWORLD · ROBINHOOD CHAIN · UNAUDITED</span>
+              <span style={{ maxWidth: 640 }}>
+                Memecoins are volatile and most go to zero. Synthetic underlyings carry keeper and redemption risk. Coins paired with
+                an underlying are sold on this site. Nothing here is investment advice.
               </span>
             </div>
           </footer>

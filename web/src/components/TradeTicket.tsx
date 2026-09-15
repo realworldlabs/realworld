@@ -13,6 +13,9 @@ import { useTx } from "@/lib/tx";
 
 type Side = "buy" | "sell";
 
+const USDG_QUICK = ["1", "5", "25", "100"];
+const PCT_QUICK = [25, 50, 75, 100];
+
 export function TradeTicket({ coin }: { coin: CoinDetail }) {
   const config = useConfig();
   const { address } = useAccount();
@@ -93,6 +96,11 @@ export function TradeTicket({ coin }: { coin: CoinDetail }) {
   const insufficient = balance.data !== undefined && amountIn > balance.data;
   const totalFeeBps = 100 + coin.creatorTaxBps;
 
+  function setPct(pct: number) {
+    if (balance.data === undefined) return;
+    setAmount(formatUnits((balance.data * BigInt(pct)) / 100n, inDecimals));
+  }
+
   async function submit() {
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
     await tx.run(
@@ -123,22 +131,18 @@ export function TradeTicket({ coin }: { coin: CoinDetail }) {
   }
 
   return (
-    <aside className="ticket">
-      <div className="ticket-head">
-        <span className="display" style={{ fontSize: 28 }}>
-          Order ticket
-        </span>
-        <span className="mono" style={{ fontSize: 11 }}>
+    <aside className="panel">
+      <div className="panel-head">
+        <span className="eyebrow">Order ticket</span>
+        <span className="mono mute" style={{ fontSize: 10.5 }}>
           № {coin.token.slice(2, 8).toUpperCase()}
         </span>
       </div>
 
       {ready.data && (
-        <div style={{ marginBottom: 16 }}>
-          <div className="status" style={{ marginTop: 0 }}>
-            The curve is sold out. Graduate it to lock liquidity; buys resume after.
-          </div>
-          <button className="btn btn-ink btn-block" style={{ marginTop: 8 }} onClick={migrate} disabled={!address || tx.state.status === "pending"}>
+        <div className="panel-body" style={{ borderBottom: "1px solid var(--line)" }}>
+          <div className="warn-bar">The curve is sold out. Graduate it to lock liquidity; buys resume after.</div>
+          <button className="btn btn-amber btn-block" style={{ marginTop: 8 }} onClick={migrate} disabled={!address || tx.state.status === "pending"}>
             Graduate {coin.symbol}
           </button>
         </div>
@@ -152,128 +156,131 @@ export function TradeTicket({ coin }: { coin: CoinDetail }) {
         ))}
       </div>
 
-      {synthPair && (
-        <div style={{ marginBottom: 14 }}>
-          <div className="label" style={{ marginBottom: 6 }}>
-            {side === "buy" ? "Pay with" : "Receive"}
+      <div className="panel-body stack">
+        {synthPair && (
+          <div className="between">
+            <span className="label">{side === "buy" ? "Pay with" : "Receive"}</span>
+            <div className="seg">
+              <button data-active={asset === "usdg"} onClick={() => setAsset("usdg")}>
+                USDG
+              </button>
+              <button data-active={asset === "pair"} onClick={() => setAsset("pair")}>
+                {pairSymbol}
+              </button>
+            </div>
           </div>
-          <div className="pay-toggle">
-            <button data-active={asset === "usdg"} onClick={() => setAsset("usdg")}>
-              USDG
-            </button>
-            <button data-active={asset === "pair"} onClick={() => setAsset("pair")}>
-              {pairSymbol}
-            </button>
+        )}
+
+        <div className="field">
+          <div className="between">
+            <label htmlFor="amount" className="label">
+              Amount · {inSymbol}
+            </label>
+            <span className="hint mono">
+              Bal {balance.data !== undefined ? formatAmount(balance.data, inDecimals, side === "buy" ? 2 : 0) : "—"}
+            </span>
           </div>
-          <div className="hint" style={{ marginTop: 6 }}>
+          <input
+            id="amount"
+            className="input input-lg"
+            inputMode="decimal"
+            placeholder="0.0"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+          />
+          <div className="quick">
+            {side === "buy" && usingUsdg
+              ? USDG_QUICK.map((v) => (
+                  <button key={v} onClick={() => setAmount(v)}>
+                    ${v}
+                  </button>
+                ))
+              : PCT_QUICK.map((p) => (
+                  <button key={p} onClick={() => setPct(p)} disabled={balance.data === undefined}>
+                    {p === 100 ? "MAX" : `${p}%`}
+                  </button>
+                ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="ticket-row">
+            <span>You receive (est.)</span>
+            <strong>{quote.isFetching ? "…" : quote.data ? `${formatAmount(quote.data.out, outDecimals, side === "buy" ? 0 : 4)} ${outSymbol}` : "—"}</strong>
+          </div>
+          <div className="ticket-row">
+            <span>Execution price</span>
+            <span className="v">{execPrice ? `${formatPrice(execPrice)} ${quoteSymbol}` : "—"}</span>
+          </div>
+          <div className="ticket-row">
+            <span>Min. after slippage</span>
+            <span className="v">{quote.data ? formatAmount(minOut, outDecimals, side === "buy" ? 0 : 4) : "—"}</span>
+          </div>
+          <div className="ticket-row">
+            <span>Fee</span>
+            <span className="v">
+              {bpsToPercent(totalFeeBps)}
+              {coin.creatorTaxBps > 0 && <span className="mute"> · incl. {bpsToPercent(coin.creatorTaxBps)} creator</span>}
+            </span>
+          </div>
+          <div className="ticket-row">
+            <span>Slippage</span>
+            <span className="seg" style={{ padding: 1 }}>
+              {[100, 300, 1000].map((b) => (
+                <button key={b} data-active={slippageBps === b} onClick={() => setSlippageBps(b)} style={{ padding: "2px 7px", fontSize: 10.5 }}>
+                  {bpsToPercent(b)}
+                </button>
+              ))}
+            </span>
+          </div>
+        </div>
+
+        {quote.data?.capped !== undefined && (
+          <div className="warn-bar">
+            Only {formatAmount(quote.data.capped, quoteDecimals)} {quoteSymbol} fits before the curve sells out. The rest stays in your wallet.
+          </div>
+        )}
+        {quote.isError && (
+          <div className="status" data-kind="error" style={{ marginTop: 0 }}>
+            {ready.data && side === "buy" ? "Curve is complete: graduate first." : "No quote for this amount."}
+          </div>
+        )}
+
+        <button
+          className={`btn btn-lg btn-block ${side === "buy" ? "btn-up" : "btn-down"}`}
+          disabled={!address || amountIn === 0n || insufficient || !quote.data || tx.state.status === "pending"}
+          onClick={submit}
+        >
+          {!address
+            ? "Connect a wallet"
+            : insufficient
+              ? `Not enough ${inSymbol}`
+              : tx.state.status === "pending"
+                ? tx.state.label
+                : `${side === "buy" ? "Buy" : "Sell"} ${coin.symbol}`}
+        </button>
+
+        {synthPair && (
+          <p className="hint" style={{ margin: 0 }}>
             {asset === "usdg"
               ? side === "buy"
-                ? `USDG buys ${pairSymbol} at its wall price, then ${coin.symbol}, in one transaction.`
-                : `Proceeds in ${pairSymbol} are redeemed for USDG from its vault (0.3% fee, haircut if the pot is short). Sell here: external terminals cannot route ${pairSymbol} back to USDG and show it as unsellable.`
-              : `Trade directly in ${pairSymbol}.`}
+                ? `USDG buys ${pairSymbol} at its wall, then ${coin.symbol}, in one transaction.`
+                : `Proceeds in ${pairSymbol} are redeemed for USDG from its vault (0.3% fee, pro-rata haircut if the pot is short). Sell here: external terminals cannot route ${pairSymbol} back to USDG.`
+              : `Trades directly in ${pairSymbol}.`}
+          </p>
+        )}
+
+        {tx.state.status === "error" && (
+          <div className="status" data-kind="error" style={{ marginTop: 0 }}>
+            {tx.state.message}
           </div>
-        </div>
-      )}
-
-      <div className="field">
-        <label htmlFor="amount">
-          Amount · {inSymbol}
-        </label>
-        <input
-          id="amount"
-          className="input"
-          inputMode="decimal"
-          placeholder="0.0"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-        />
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span className="hint">
-            Balance: {balance.data !== undefined ? formatAmount(balance.data, inDecimals) : "—"}
-          </span>
-          {balance.data !== undefined && balance.data > 0n && (
-            <button
-              className="hint"
-              style={{ background: "none", border: 0, cursor: "pointer", textDecoration: "underline" }}
-              onClick={() => setAmount(formatUnits(balance.data!, inDecimals))}
-            >
-              Max
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div style={{ margin: "16px 0" }}>
-        <div className="ticket-row">
-          <span>You receive (est.)</span>
-          <strong>
-            {quote.isFetching ? "…" : quote.data ? `${formatAmount(quote.data.out, outDecimals)} ${outSymbol}` : "—"}
-          </strong>
-        </div>
-        <div className="ticket-row">
-          <span>Execution price</span>
-          <span>{execPrice ? `${formatPrice(execPrice)} ${quoteSymbol}` : "—"}</span>
-        </div>
-        <div className="ticket-row">
-          <span>Minimum after {bpsToPercent(slippageBps)} slippage</span>
-          <span>{quote.data ? formatAmount(minOut, outDecimals) : "—"}</span>
-        </div>
-        <div className="ticket-row">
-          <span>Trade fee</span>
-          <span>
-            {bpsToPercent(totalFeeBps)} {coin.creatorTaxBps > 0 && `(incl. ${bpsToPercent(coin.creatorTaxBps)} creator tax)`}
-          </span>
-        </div>
-      </div>
-
-      {quote.data?.capped !== undefined && (
-        <div className="status" style={{ marginBottom: 10 }}>
-          Only {formatAmount(quote.data.capped, quoteDecimals)} {quoteSymbol} fits before the curve sells out. The rest stays in your
-          wallet.
-        </div>
-      )}
-      {quote.isError && (
-        <div className="status" data-kind="error" style={{ marginBottom: 10 }}>
-          {ready.data && side === "buy" ? "Curve is complete: graduate first." : "No quote for this amount."}
-        </div>
-      )}
-
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
-        <span className="label">Slippage</span>
-        {[100, 300, 1000].map((b) => (
-          <div key={b} className="pay-toggle">
-            <button data-active={slippageBps === b} onClick={() => setSlippageBps(b)}>
-              {bpsToPercent(b)}
-            </button>
+        )}
+        {tx.state.status === "success" && (
+          <div className="status" data-kind="success" style={{ marginTop: 0 }}>
+            Filled · {tx.state.hash.slice(0, 18)}…
           </div>
-        ))}
+        )}
       </div>
-
-      <button
-        className="btn btn-ink btn-block"
-        style={{ height: 50, fontSize: 14 }}
-        disabled={!address || amountIn === 0n || insufficient || !quote.data || tx.state.status === "pending"}
-        onClick={submit}
-      >
-        {!address
-          ? "Connect a wallet"
-          : insufficient
-            ? `Not enough ${inSymbol}`
-            : tx.state.status === "pending"
-              ? tx.state.label
-              : `${side === "buy" ? "Buy" : "Sell"} ${coin.symbol}`}
-      </button>
-
-      {tx.state.status === "error" && (
-        <div className="status" data-kind="error">
-          {tx.state.message}
-        </div>
-      )}
-      {tx.state.status === "success" && (
-        <div className="status" data-kind="success">
-          Filled · {tx.state.hash.slice(0, 18)}…
-        </div>
-      )}
     </aside>
   );
 }

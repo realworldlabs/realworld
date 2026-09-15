@@ -1,21 +1,18 @@
 "use client";
 
+import Link from "next/link";
+import { Delta } from "@/components/bits";
 import { useAssets, useCoins } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 
-/** Scrolling tape of underlying prices and the hottest coins. Duplicated once so the loop is seamless. */
+/** Scrolling tape of underlying prices and the busiest coins. Duplicated once so the loop is seamless. */
 export function TickerTape() {
   const { data: assets } = useAssets();
-  const { data: coins } = useCoins({ sort: "volume", limit: "8" });
+  const { data: coins } = useCoins({ sort: "volume", limit: "10" });
 
   const items = [
-    ...(assets ?? []).map((a) => ({ key: `a${a.assetId}`, sym: a.symbol, value: `$${formatPrice(a.priceUsd)}`, note: a.category === "MACRO" ? "MACRO" : "COLLECT" })),
-    ...(coins?.items ?? []).map((c) => ({
-      key: c.token,
-      sym: `$${c.symbol}`,
-      value: `$${formatPrice(c.priceUsd)}`,
-      note: c.graduated ? "GRAD" : `${Math.round(c.curveProgress * 100)}%`,
-    })),
+    ...(assets ?? []).map((a) => ({ key: `a${a.assetId}`, href: `/asset?id=${a.assetId}`, sym: a.symbol, value: `$${formatPrice(a.priceUsd)}`, change: a.change24h })),
+    ...(coins?.items ?? []).map((c) => ({ key: c.token, href: `/coin?token=${c.token}`, sym: `$${c.symbol}`, value: `$${formatPrice(c.priceUsd)}`, change: c.change24h })),
   ];
   if (items.length === 0) return <div className="tape" />;
 
@@ -23,11 +20,11 @@ export function TickerTape() {
     <div className="tape" aria-label="Live prices">
       <div className="tape-track">
         {[...items, ...items].map((it, i) => (
-          <span className="tape-item" key={`${it.key}-${i}`}>
+          <Link className="tape-item" key={`${it.key}-${i}`} href={it.href}>
             <span className="tape-sym">{it.sym}</span>
-            <span>{it.value}</span>
-            <span className="mute">{it.note}</span>
-          </span>
+            <span className="amber">{it.value}</span>
+            <Delta value={it.change} />
+          </Link>
         ))}
       </div>
     </div>

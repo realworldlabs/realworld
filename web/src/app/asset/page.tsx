@@ -3,12 +3,12 @@
 import { assetRegistryAbi, priceWallAbi, redemptionVaultAbi } from "@rwa/abi";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { erc20Abi, formatUnits, parseUnits } from "viem";
 import { useAccount, useConfig, useReadContract } from "wagmi";
 import { simulateContract } from "wagmi/actions";
-import { CoinAvatar, CurveMeter } from "@/components/bits";
+import { AssetChart } from "@/components/AssetChart";
+import { CoinAvatar, Copy, CurveBar, Delta } from "@/components/bits";
 import { useAsset, useCoins } from "@/lib/api";
 import { deployments, robinhood } from "@/lib/config";
 import { formatAmount, formatPrice, formatUsd, timeAgo } from "@/lib/format";
@@ -30,12 +30,7 @@ function AssetView() {
   const { data: asset } = useAsset(assetId);
   const { data: coins } = useCoins({ assetId: id, sort: "mcap", limit: "20" });
 
-  const { data: cfg } = useReadContract({
-    address: deployments.assetRegistry,
-    abi: assetRegistryAbi,
-    functionName: "getConfig",
-    args: [BigInt(assetId)],
-  });
+  const { data: cfg } = useReadContract({ address: deployments.assetRegistry, abi: assetRegistryAbi, functionName: "getConfig", args: [BigInt(assetId)] });
   const { data: stale } = useReadContract({
     address: deployments.assetRegistry,
     abi: assetRegistryAbi,
@@ -61,62 +56,62 @@ function AssetView() {
   if (!asset) return <div className="shell page empty">Loading underlying…</div>;
   const ratio = unitQuote ? Number(unitQuote[3]) / 1e18 : undefined;
   const explorer = robinhood.blockExplorers.default.url;
+  const potUsdg = wall ? BigInt(asset.pot) + wall[1] : BigInt(asset.pot);
 
   return (
     <div className="shell page">
-      <Link href="/assets" className="eyebrow">
-        ← All underlyings
-      </Link>
-      <div className="coin-hero" style={{ marginTop: 14 }}>
-        <div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <span className="chip chip-amber">{asset.category}</span>
-            {asset.paused && <span className="chip down">PAUSED</span>}
-            {stale && <span className="chip down">STALE</span>}
+      <div className="panel coin-head reveal">
+        <div className="coin-ident">
+          <span className="avatar" style={{ width: 44, height: 44, fontSize: 14, background: "var(--bg-4)", color: "var(--amber)" }}>
+            {asset.symbol.slice(1, 4)}
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <div className="row" style={{ flexWrap: "wrap" }}>
+              <span className="coin-title" style={{ textTransform: "none" }}>
+                {asset.symbol}
+              </span>
+              <span className="chip chip-amber">{asset.category}</span>
+              {asset.paused ? <span className="chip chip-down">PAUSED</span> : stale ? <span className="chip chip-down">STALE</span> : <span className="chip chip-up">LIVE</span>}
+            </div>
+            <div className="row mono mute" style={{ fontSize: 11, marginTop: 4, flexWrap: "wrap" }}>
+              <span className="dim">{asset.name}</span>
+              <span>·</span>
+              <Link href="/assets">all underlyings</Link>
+              <Copy text={asset.token} />
+            </div>
           </div>
-          <h1 className="display coin-title" style={{ textTransform: "none" }}>
-            {asset.symbol}
-          </h1>
-          <div className="dim">{asset.name}</div>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <div className="eyebrow">Wall price</div>
-          <div className="mono amber" style={{ fontSize: 48 }}>
-            ${formatPrice(asset.priceUsd)}
+        <div className="coin-metrics">
+          <div className="metric">
+            <div className="eyebrow">Wall price</div>
+            <div className="metric-v big">${formatPrice(asset.priceUsd)}</div>
+            <div className="row mono" style={{ fontSize: 11, gap: 8 }}>
+              <Delta value={asset.change24h} boxed />
+              <span className="mute">updated {timeAgo(asset.lastUpdate)} ago</span>
+            </div>
           </div>
-          <div className="mono dim">updated {timeAgo(asset.lastUpdate)} ago</div>
+          <Metric label="Redemption ratio" value={ratio === undefined ? "—" : `${(ratio * 100).toFixed(2)}%`} down={ratio !== undefined && ratio < 0.9995} />
+          <Metric label="Pot · USDG" value={`$${formatAmount(potUsdg, 6, 0)}`} sub="vault + wall" />
+          <Metric label="Max move" value={cfg ? `±${(cfg.maxMoveTicks / 100).toFixed(0)}%` : "—"} sub={cfg ? `every ${Math.round(cfg.minUpdateInterval / 3600)}h+` : undefined} />
+          <Metric label="Heartbeat" value={cfg ? `${Math.round(cfg.heartbeat / 3600)}h` : "—"} />
+          <Metric label="Coins" value={String(asset.launches)} />
         </div>
       </div>
 
-      {stale && <div className="warn-bar" style={{ marginBottom: 20 }}>No keeper update within the heartbeat. New launches against this underlying are blocked until it updates; trading and redemptions continue.</div>}
+      {stale && (
+        <div className="warn-bar" style={{ marginBottom: 12 }}>
+          No keeper update within the heartbeat. New launches against this underlying are blocked until it updates; trading and redemptions continue.
+        </div>
+      )}
 
       <div className="coin-layout">
-        <div style={{ display: "flex", flexDirection: "column", gap: 24, minWidth: 0 }}>
-          <div className="grid-cells">
-            <div className="cell">
-              <div className="eyebrow">Redemption ratio</div>
-              <div className="cell-value" style={{ fontSize: 22, color: ratio !== undefined && ratio < 0.9995 ? "var(--down)" : undefined }}>
-                {ratio === undefined ? "—" : `${(ratio * 100).toFixed(2)}%`}
-              </div>
+        <div className="stack reveal" style={{ animationDelay: "60ms", minWidth: 0 }}>
+          <div className="panel">
+            <div className="panel-head">
+              <span className="eyebrow">Wall price · USD</span>
+              <span className="eyebrow">{Math.max(0, asset.history.length - 1)} keeper moves</span>
             </div>
-            <div className="cell">
-              <div className="eyebrow">Pot (vault + wall)</div>
-              <div className="cell-value" style={{ fontSize: 22 }}>
-                ${wall ? formatAmount(BigInt(asset.pot) + wall[1], 6, 0) : formatAmount(asset.pot, 6, 0)}
-              </div>
-            </div>
-            <div className="cell">
-              <div className="eyebrow">Max move / update</div>
-              <div className="cell-value" style={{ fontSize: 22 }}>
-                {cfg ? `±${(cfg.maxMoveTicks / 100).toFixed(0)}%` : "—"}
-              </div>
-            </div>
-            <div className="cell">
-              <div className="eyebrow">Heartbeat</div>
-              <div className="cell-value" style={{ fontSize: 22 }}>
-                {cfg ? `${Math.round(cfg.heartbeat / 3600)}h` : "—"}
-              </div>
-            </div>
+            <AssetChart history={asset.history} current={asset.priceUsd} />
           </div>
 
           <div className="panel">
@@ -124,15 +119,13 @@ function AssetView() {
               <span className="eyebrow">Keeper moves · audit trail</span>
               <span className="hint">each hash commits to the source readings behind the move</span>
             </div>
-            <div className="tape-list">
+            <div className="list list-scroll">
               {asset.prices.map((p) => (
-                <a key={p.id} className="tape-row" style={{ gridTemplateColumns: "140px 1fr 1fr 60px" }} href={`${explorer}/tx/${p.txHash}`} target="_blank" rel="noreferrer">
+                <a key={p.id} className="list-row" style={{ gridTemplateColumns: "120px 90px 1fr 60px" }} href={p.txHash ? `${explorer}/tx/${p.txHash}` : undefined} target="_blank" rel="noreferrer">
                   <span className="amber">${formatPrice(p.priceUsd)}</span>
                   <span className="dim">tick {p.tick}</span>
-                  <span className="mute">{p.sourcesHash.slice(0, 18)}…</span>
-                  <span className="mute" style={{ textAlign: "right" }}>
-                    {timeAgo(p.timestamp)}
-                  </span>
+                  <span className="mute">{p.sourcesHash.startsWith("0x000000") ? "opening price" : `${p.sourcesHash.slice(0, 22)}…`}</span>
+                  <span className="right mute">{timeAgo(p.timestamp)}</span>
                 </a>
               ))}
               {asset.prices.length === 0 && <div className="empty">Opening price only. No keeper moves yet.</div>}
@@ -146,17 +139,20 @@ function AssetView() {
                 Launch one →
               </Link>
             </div>
-            <div className="tape-list">
+            <div className="list">
               {(coins?.items ?? []).map((c) => (
-                <Link key={c.token} href={`/coin?token=${c.token}`} className="tape-row" style={{ gridTemplateColumns: "44px 1fr 150px 110px" }}>
-                  <CoinAvatar coin={c} size={30} />
+                <Link key={c.token} href={`/coin?token=${c.token}`} className="list-row" style={{ gridTemplateColumns: "34px 1fr 100px 80px 90px" }}>
+                  <CoinAvatar coin={c} size={24} />
                   <span>
-                    <strong>{c.symbol}</strong> <span className="mute">{c.name}</span>
+                    <span style={{ color: "var(--fg)" }}>{c.symbol}</span> <span className="mute">{c.name}</span>
                   </span>
-                  <CurveMeter progress={c.curveProgress} graduated={c.graduated} />
-                  <span className="amber" style={{ textAlign: "right" }}>
-                    {formatUsd(c.marketCapUsd, { compact: true })}
+                  <span className="right">
+                    <CurveBar progress={c.curveProgress} graduated={c.graduated} />
                   </span>
+                  <span className="right">
+                    <Delta value={c.change24h} />
+                  </span>
+                  <span className="right amber">{formatUsd(c.marketCapUsd, { compact: true })}</span>
                 </Link>
               ))}
               {coins?.items.length === 0 && <div className="empty">No coins yet</div>}
@@ -164,8 +160,26 @@ function AssetView() {
           </div>
         </div>
 
-        <RedeemTicket assetId={assetId} token={asset.token} symbol={asset.symbol} />
+        <div className="ticket reveal" style={{ animationDelay: "120ms" }}>
+          <RedeemTicket assetId={assetId} token={asset.token} symbol={asset.symbol} />
+        </div>
       </div>
+    </div>
+  );
+}
+
+function Metric({ label, value, sub, down }: { label: string; value: React.ReactNode; sub?: React.ReactNode; down?: boolean }) {
+  return (
+    <div className="metric">
+      <div className="eyebrow">{label}</div>
+      <div className="metric-v" style={down ? { color: "var(--down)" } : undefined}>
+        {value}
+      </div>
+      {sub !== undefined && (
+        <div className="mono mute" style={{ fontSize: 11 }}>
+          {sub}
+        </div>
+      )}
     </div>
   );
 }
@@ -212,67 +226,70 @@ function RedeemTicket({ assetId, token, symbol }: { assetId: number; token: `0x$
   }
 
   return (
-    <aside className="ticket">
-      <div className="ticket-head">
-        <span className="display" style={{ fontSize: 28 }}>
-          Redemption slip
-        </span>
-        <span className="mono" style={{ fontSize: 11 }}>
+    <aside className="panel">
+      <div className="panel-head">
+        <span className="eyebrow">Redemption slip</span>
+        <span className="mono mute" style={{ fontSize: 10.5 }}>
           {symbol} → USDG
         </span>
       </div>
-      <p className="hint" style={{ marginTop: 0 }}>
-        The vault buys {symbol} back at the wall price from this asset&apos;s own USDG pot, minus 0.3%. If the price has risen
-        faster than the pot, every holder takes the same pro-rata haircut.
-      </p>
-      <div className="field">
-        <label htmlFor="redeem">Amount · {symbol}</label>
-        <input id="redeem" className="input" inputMode="decimal" placeholder="0.0" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} />
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span className="hint">Balance: {balance !== undefined ? formatAmount(balance, 18) : "—"}</span>
-          {balance !== undefined && balance > 0n && (
-            <button className="hint" style={{ background: "none", border: 0, cursor: "pointer", textDecoration: "underline" }} onClick={() => setAmount(formatUnits(balance, 18))}>
-              Max
-            </button>
-          )}
+      <div className="panel-body stack">
+        <p className="hint" style={{ margin: 0 }}>
+          The vault buys {symbol} back at the wall price from this asset&apos;s own USDG pot, minus 0.3%. If the price has risen faster than
+          the pot, every holder takes the same pro-rata haircut.
+        </p>
+        <div className="field">
+          <div className="between">
+            <label htmlFor="redeem" className="label">
+              Amount · {symbol}
+            </label>
+            <span className="hint mono">Bal {balance !== undefined ? formatAmount(balance, 18) : "—"}</span>
+          </div>
+          <input id="redeem" className="input input-lg" inputMode="decimal" placeholder="0.0" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} />
+          <div className="quick">
+            {[25, 50, 75, 100].map((p) => (
+              <button key={p} disabled={balance === undefined} onClick={() => balance !== undefined && setAmount(formatUnits((balance * BigInt(p)) / 100n, 18))}>
+                {p === 100 ? "MAX" : `${p}%`}
+              </button>
+            ))}
+          </div>
         </div>
+        <div>
+          <div className="ticket-row">
+            <span>Gross</span>
+            <span className="v">{quote ? `${formatAmount(quote[0], 6)} USDG` : "—"}</span>
+          </div>
+          <div className="ticket-row">
+            <span>Fee (0.3%)</span>
+            <span className="v">{quote ? formatAmount(quote[1], 6) : "—"}</span>
+          </div>
+          <div className="ticket-row">
+            <span>Pot ratio</span>
+            <span className="v">{quote ? `${(Number(quote[3]) / 1e16).toFixed(2)}%` : "—"}</span>
+          </div>
+          <div className="ticket-row">
+            <span>You receive</span>
+            <strong>{quote ? `${formatAmount(quote[2], 6)} USDG` : "—"}</strong>
+          </div>
+        </div>
+        <button
+          className="btn btn-lg btn-block btn-amber"
+          disabled={!address || raw === 0n || (balance !== undefined && raw > balance) || tx.state.status === "pending"}
+          onClick={redeem}
+        >
+          {!address ? "Connect a wallet" : tx.state.status === "pending" ? tx.state.label : `Redeem ${symbol}`}
+        </button>
+        {tx.state.status === "error" && (
+          <div className="status" data-kind="error" style={{ marginTop: 0 }}>
+            {tx.state.message}
+          </div>
+        )}
+        {tx.state.status === "success" && (
+          <div className="status" data-kind="success" style={{ marginTop: 0 }}>
+            Redeemed · {tx.state.hash.slice(0, 18)}…
+          </div>
+        )}
       </div>
-      <div style={{ margin: "16px 0" }}>
-        <div className="ticket-row">
-          <span>Gross</span>
-          <span>{quote ? `${formatAmount(quote[0], 6)} USDG` : "—"}</span>
-        </div>
-        <div className="ticket-row">
-          <span>Fee (0.3%)</span>
-          <span>{quote ? formatAmount(quote[1], 6) : "—"}</span>
-        </div>
-        <div className="ticket-row">
-          <span>Pot ratio</span>
-          <span>{quote ? `${(Number(quote[3]) / 1e16).toFixed(2)}%` : "—"}</span>
-        </div>
-        <div className="ticket-row">
-          <span>You receive</span>
-          <strong>{quote ? `${formatAmount(quote[2], 6)} USDG` : "—"}</strong>
-        </div>
-      </div>
-      <button
-        className="btn btn-ink btn-block"
-        style={{ height: 50 }}
-        disabled={!address || raw === 0n || (balance !== undefined && raw > balance) || tx.state.status === "pending"}
-        onClick={redeem}
-      >
-        {!address ? "Connect a wallet" : tx.state.status === "pending" ? tx.state.label : `Redeem ${symbol}`}
-      </button>
-      {tx.state.status === "error" && (
-        <div className="status" data-kind="error">
-          {tx.state.message}
-        </div>
-      )}
-      {tx.state.status === "success" && (
-        <div className="status" data-kind="success">
-          Redeemed · {tx.state.hash.slice(0, 18)}…
-        </div>
-      )}
     </aside>
   );
 }

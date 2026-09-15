@@ -67,6 +67,19 @@ export const handlers: Record<string, Handler> = {
         launches: 0,
       })
       .onConflictDoNothing();
+    // The opening price starts the history so change and sparkline have a baseline before the first keeper move.
+    await db
+      .insert(s.assetPrice)
+      .values({
+        id: `${eventId(e)}-open`,
+        assetId: Number(assetId),
+        tick: startTick,
+        priceUsd: synthPriceAtTick(startTick, synthIsToken0),
+        sourcesHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        timestamp: await blockTimestamp(e.blockNumber),
+        txHash: e.txHash,
+      })
+      .onConflictDoNothing();
   },
 
   async PriceRecorded(db, e: Ev<{ assetId: bigint; oldTick: number; newTick: number }>) {

@@ -1,68 +1,114 @@
 "use client";
 
 import Link from "next/link";
-import { useAssets } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { Delta, Sparkline } from "@/components/bits";
+import { useAssets, type Asset } from "@/lib/api";
 import { formatAmount, formatPrice, timeAgo } from "@/lib/format";
 
-const CATEGORY_COPY = {
-  MACRO: "Published statistics: indices, inflation and rates. Moves at most ±5% per update, from two agreeing official sources.",
-  COLLECTIBLE: "Market prices for cards, skins and everyday goods. Moves at most ±20% per update, median of two marketplaces.",
+const CATEGORY = {
+  MACRO: {
+    title: "Macro",
+    copy: "Published statistics: indices, inflation and rates. Moves at most ±5% per update, only when two official sources agree within 0.5%.",
+  },
+  COLLECTIBLE: {
+    title: "Collectibles",
+    copy: "Market prices for cards, skins and everyday goods. Moves at most ±20% per update, median of two marketplaces within 10%.",
+  },
 } as const;
 
 export default function AssetsPage() {
+  const router = useRouter();
   const { data: assets, isLoading } = useAssets();
   const groups = (["MACRO", "COLLECTIBLE"] as const).map((cat) => ({ cat, items: (assets ?? []).filter((a) => a.category === cat) }));
 
   return (
     <div className="shell page">
-      <div className="eyebrow">What coins are priced in</div>
-      <h1 className="display" style={{ fontSize: "clamp(56px, 8vw, 110px)", margin: "10px 0 12px" }}>
-        The <span className="amber">underlyings</span>
-      </h1>
-      <p className="hero-copy" style={{ maxWidth: 720 }}>
-        Each underlying is a synthetic token whose whole supply sits in a one-price sell wall. A keeper moves the wall when the
-        real-world price changes, within limits the contract enforces, and publishes the source readings behind every move.
-        Sell an underlying back to its vault for USDG.
-      </p>
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">What coins are priced in</div>
+          <h1 className="display page-title">
+            The <span className="amber">underlyings</span>
+          </h1>
+        </div>
+        <p className="hint" style={{ maxWidth: 560, margin: 0 }}>
+          Each underlying is a synthetic token whose whole supply sits in a one-price sell wall. A keeper moves the wall when the
+          real-world price changes, within limits the contract enforces, and publishes the source readings behind every move.
+        </p>
+      </div>
 
       {isLoading && <div className="empty">Loading underlyings…</div>}
       {groups.map(
         (g) =>
           g.items.length > 0 && (
-            <section key={g.cat} style={{ marginTop: 40 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, gap: 20 }}>
-                <h2 className="display" style={{ fontSize: 40, margin: 0 }}>
-                  {g.cat === "MACRO" ? "Macro" : "Collectibles"}
-                </h2>
-                <span className="hint" style={{ maxWidth: 560, textAlign: "right" }}>
-                  {CATEGORY_COPY[g.cat]}
+            <section key={g.cat} style={{ marginBottom: 16 }}>
+              <div className="toolbar" style={{ justifyContent: "space-between" }}>
+                <span className="display" style={{ fontSize: 20 }}>
+                  {CATEGORY[g.cat].title}
+                </span>
+                <span className="hint" style={{ maxWidth: 620 }}>
+                  {CATEGORY[g.cat].copy}
                 </span>
               </div>
-              <div className="asset-grid">
-                {g.items.map((a) => (
-                  <Link key={a.assetId} href={`/asset?id=${a.assetId}`} className="asset-card">
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span className="display" style={{ fontSize: 30, textTransform: "none" }}>
-                        {a.symbol}
-                      </span>
-                      {a.paused ? <span className="chip down">PAUSED</span> : <span className="chip chip-up">LIVE</span>}
-                    </div>
-                    <div className="dim">{a.name}</div>
-                    <div className="asset-price">${formatPrice(a.priceUsd)}</div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "auto" }} className="mono">
-                      <span className="mute" style={{ fontSize: 12 }}>
-                        updated {timeAgo(a.lastUpdate)} ago
-                      </span>
-                      <span style={{ fontSize: 12 }}>
-                        {a.launches} coins · pot ${formatAmount(a.pot, 6, 0)}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+              <div className="tbl-wrap">
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>Underlying</th>
+                      <th className="num">Wall price</th>
+                      <th className="num">24h</th>
+                      <th className="num">History</th>
+                      <th className="num">Updated</th>
+                      <th className="num">Moves</th>
+                      <th className="num">Coins</th>
+                      <th className="num">Pot</th>
+                      <th className="num">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {g.items.map((a) => (
+                      <AssetRow key={a.assetId} asset={a} onOpen={() => router.push(`/asset?id=${a.assetId}`)} />
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </section>
           ),
       )}
     </div>
+  );
+}
+
+function AssetRow({ asset: a, onOpen }: { asset: Asset; onOpen: () => void }) {
+  return (
+    <tr onClick={onOpen}>
+      <td>
+        <Link href={`/asset?id=${a.assetId}`} className="coin-cell" onClick={(e) => e.stopPropagation()}>
+          <span className="avatar" style={{ width: 30, height: 30, fontSize: 11, background: "var(--bg-4)", color: "var(--amber)" }}>
+            {a.symbol.slice(1, 4)}
+          </span>
+          <span>
+            <div className="coin-sym">{a.symbol}</div>
+            <div className="coin-name">{a.name}</div>
+          </span>
+        </Link>
+      </td>
+      <td className="num amber" style={{ fontSize: 14 }}>
+        ${formatPrice(a.priceUsd)}
+      </td>
+      <td className="num">
+        <Delta value={a.change24h} boxed />
+      </td>
+      <td className="num">
+        <span style={{ display: "inline-block" }}>
+          <Sparkline points={a.history.map((h) => h.p)} />
+        </span>
+      </td>
+      <td className="num mute">{timeAgo(a.lastUpdate)} ago</td>
+      <td className="num">{Math.max(0, a.history.length - 1)}</td>
+      <td className="num">{a.launches}</td>
+      <td className="num">${formatAmount(a.pot, 6, 0)}</td>
+      <td className="num">{a.paused ? <span className="chip chip-down">PAUSED</span> : <span className="chip chip-up">LIVE</span>}</td>
+    </tr>
   );
 }

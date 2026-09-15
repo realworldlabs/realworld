@@ -12,6 +12,16 @@ const INTERVALS = [
   { s: 86400, label: "1d" },
 ];
 
+export const CHART_THEME = {
+  text: "#aaa793",
+  grid: "#1c1f17",
+  border: "#2f3427",
+  crosshair: "#9a6a00",
+  up: "#4fe08f",
+  down: "#ff6553",
+  volume: "#9a6a0066",
+};
+
 export function CoinChart({ token }: { token: string }) {
   const [interval, setInterval] = useState(300);
   const { data: candles } = useCandles(token, interval);
@@ -25,26 +35,26 @@ export function CoinChart({ token }: { token: string }) {
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#a9a592",
+        textColor: CHART_THEME.text,
         fontFamily: "IBM Plex Mono, monospace",
-        fontSize: 11,
+        fontSize: 10.5,
       },
-      grid: { vertLines: { color: "#23261c" }, horzLines: { color: "#23261c" } },
-      rightPriceScale: { borderColor: "#3d4232" },
-      timeScale: { borderColor: "#3d4232", timeVisible: true, secondsVisible: false },
-      crosshair: { vertLine: { color: "#b37a00" }, horzLine: { color: "#b37a00" } },
+      grid: { vertLines: { color: CHART_THEME.grid }, horzLines: { color: CHART_THEME.grid } },
+      rightPriceScale: { borderColor: CHART_THEME.border },
+      timeScale: { borderColor: CHART_THEME.border, timeVisible: true, secondsVisible: false },
+      crosshair: { vertLine: { color: CHART_THEME.crosshair }, horzLine: { color: CHART_THEME.crosshair } },
       localization: { priceFormatter: (p: number) => `$${formatPrice(p)}` },
     });
     const price = chart.addSeries(CandlestickSeries, {
-      upColor: "#57e39b",
-      downColor: "#ff6a55",
+      upColor: CHART_THEME.up,
+      downColor: CHART_THEME.down,
       borderVisible: false,
-      wickUpColor: "#57e39b",
-      wickDownColor: "#ff6a55",
+      wickUpColor: CHART_THEME.up,
+      wickDownColor: CHART_THEME.down,
       priceFormat: { type: "custom", minMove: 1e-12, formatter: (p: number) => `$${formatPrice(p)}` },
     });
-    const volume = chart.addSeries(HistogramSeries, { color: "#b37a0066", priceScaleId: "vol", priceFormat: { type: "volume" } });
-    chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+    const volume = chart.addSeries(HistogramSeries, { color: CHART_THEME.volume, priceScaleId: "vol", priceFormat: { type: "volume" } });
+    chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.84, bottom: 0 } });
     chartRef.current = chart;
     seriesRef.current = { price, volume };
     return () => {
@@ -70,7 +80,9 @@ export function CoinChart({ token }: { token: string }) {
       };
     });
     seriesRef.current.price.setData(bars);
-    seriesRef.current.volume.setData(candles.map((c) => ({ time: c.bucket as UTCTimestamp, value: c.volumeUsd })));
+    seriesRef.current.volume.setData(
+      candles.map((c) => ({ time: c.bucket as UTCTimestamp, value: c.volumeUsd, color: c.close >= c.open ? "#4fe08f55" : "#ff655355" })),
+    );
     chartRef.current?.timeScale().fitContent();
   }, [candles]);
 
@@ -78,9 +90,9 @@ export function CoinChart({ token }: { token: string }) {
     <div className="panel">
       <div className="panel-head">
         <span className="eyebrow">Price · USD</span>
-        <div className="interval-tabs">
+        <div className="seg">
           {INTERVALS.map((i) => (
-            <button key={i.s} className="filter" data-active={interval === i.s} onClick={() => setInterval(i.s)}>
+            <button key={i.s} data-active={interval === i.s} onClick={() => setInterval(i.s)}>
               {i.label}
             </button>
           ))}
@@ -89,7 +101,7 @@ export function CoinChart({ token }: { token: string }) {
       <div style={{ position: "relative" }}>
         <div ref={el} className="chart-box" />
         {candles && candles.length === 0 && (
-          <div className="empty" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
+          <div className="empty" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", pointerEvents: "none" }}>
             No trades in this interval yet
           </div>
         )}
